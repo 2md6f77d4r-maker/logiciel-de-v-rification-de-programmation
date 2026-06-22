@@ -1,0 +1,2960 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analyse planning Excel</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+<style>
+:root{
+  --bg:#edf2f7;--card:#ffffff;--ink:#172033;--muted:#687386;--line:#d6deea;
+  --rail:#243b5a;--rail2:#315c86;--accent:#ffb703;--danger:#d94b4b;--ok:#20845a;--warn:#c78300;
+  --soft:#f7f9fc;--blueSoft:#eaf3ff;--shadow:0 10px 28px rgba(24,41,75,.10);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at top left,rgba(49,92,134,.14),transparent 34%),linear-gradient(180deg,#f7f9fc,#e9eef6);color:var(--ink);transition:background .22s ease,color .22s ease}
+body.dark{--bg:#0f1724;--card:#172131;--ink:#f4f7fb;--muted:#b7c1d2;--line:#314158;--rail:#88bdf2;--rail2:#4d8cc8;--accent:#ffd166;--danger:#ff7474;--ok:#4ade80;--warn:#ffc35a;--soft:#111827;--blueSoft:#132238;--shadow:0 10px 30px rgba(0,0,0,.28);background:linear-gradient(180deg,#0b1220,#111827)}
+header{position:relative;background:linear-gradient(135deg,#19263c,#27496d 58%,#315c86);color:white;padding:24px 18px 22px;border-bottom:4px solid var(--accent);box-shadow:0 10px 28px rgba(22,37,64,.18)}
+header h1{margin:0;font-size:27px;font-weight:800;letter-spacing:.01em}
+header p{margin:8px 0 0;color:#dce8f7;max-width:980px;line-height:1.35}
+main{max-width:1480px;margin:0 auto;padding:18px}
+.panel{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);padding:17px;margin-bottom:16px}
+body.dark .panel{background:rgba(23,33,49,.96)}
+.grid{display:grid;grid-template-columns:repeat(6,minmax(145px,1fr));gap:12px}
+.kpi{border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,#ffffff,#f7faff);padding:14px;min-height:92px}
+.kpi .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;line-height:1.25}
+.kpi .value{font-size:28px;margin-top:8px;font-weight:800;color:#27496d}
+.controls{display:grid;grid-template-columns:repeat(6,minmax(150px,1fr));gap:12px;align-items:end}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:700}
+input,select,button{width:100%;border:1px solid var(--line);border-radius:14px;padding:11px 12px;background:white;color:var(--ink);font-size:14px}
+input:focus,select:focus{outline:3px solid rgba(49,92,134,.18);border-color:#315c86}
+button{background:linear-gradient(135deg,#243b5a,#315c86);color:white;cursor:pointer;border:0;font-weight:700;transition:transform .12s ease,filter .12s ease,box-shadow .12s ease}
+button:hover{filter:brightness(1.06);box-shadow:0 8px 18px rgba(36,59,90,.18)}
+button:active{transform:translateY(1px)}
+button.secondary{background:#eef4fb;color:#243b5a;border:1px solid #c9d6e6}
+button.export{background:linear-gradient(135deg,#1f7a55,#2f9b6e);color:white}
+button.pdf{background:linear-gradient(135deg,#c63f3f,#e05252);color:white}
+button.pdf:hover{background:linear-gradient(135deg,#b63737,#d94b4b)}
+.actionbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.actionbar button{width:auto;padding:10px 15px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 16px;padding:7px;background:#eef3f9;border:1px solid var(--line);border-radius:18px}
+.tab{width:auto;padding:10px 14px;border-radius:999px;background:transparent;color:#243b5a;border:0;box-shadow:none}.tab:hover{box-shadow:none;background:#ffffff}.tab.active{background:linear-gradient(135deg,#243b5a,#315c86);color:white}
+.view{display:none}.view.active{display:block}
+.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:18px;max-height:590px;background:white}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;background:white}
+th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:9px;white-space:nowrap;text-align:center}
+th{position:sticky;top:0;background:#eaf1fa;color:#243b5a;z-index:2;font-weight:800}
+td:first-child,th:first-child{position:sticky;left:0;background:#fff;z-index:1;text-align:left;font-weight:700}th:first-child{z-index:3;background:#eaf1fa}tr:nth-child(even) td{background:#fbfdff}
+.badge{display:inline-block;padding:5px 9px;border-radius:999px;font-size:12px;font-weight:700}.danger{background:#ffe2e2;color:#9b1c1c}.warn{background:#fff0c9;color:#845600}.ok{background:#daf5e8;color:#12623a}.info{background:#e6f1ff;color:#1d4d84}.solution{background:#e6f8df;color:#236018}
+.codeR{background:#e3f7ea}.codeCP{background:#fff0c7}.codeWork{background:#e7f1ff}.codeEmpty{background:#fff}
+.charts{display:grid;grid-template-columns:1fr 1fr;gap:16px}canvas{max-height:310px}.small{font-size:12px;color:var(--muted);line-height:1.35}
+.headerbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.headerActions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.themeToggle,.helpToggle,.langBtn{width:auto;min-width:48px;height:42px;border-radius:999px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.38);font-size:20px;line-height:1;padding:0 12px;box-shadow:none}.themeToggle:hover,.helpToggle:hover,.langBtn:hover{background:rgba(255,255,255,.27);box-shadow:none}.langBtn.activeLang{background:rgba(255,183,3,.98);border-color:#ffcf5a}
+.helpGrid{display:grid;grid-template-columns:repeat(2,minmax(240px,1fr));gap:14px}.helpCard{background:#fbfdff;border:1px solid var(--line);border-radius:18px;padding:15px}.helpCard h3{margin:0 0 8px;color:#27496d;font-size:16px}.helpCard p,.helpCard li{line-height:1.45}
+.settingsGrid{display:grid;grid-template-columns:repeat(3,minmax(200px,1fr));gap:12px}.qualityGrid{display:grid;grid-template-columns:repeat(4,minmax(170px,1fr));gap:10px}.qualityItem{border:1px solid var(--line);border-radius:16px;padding:13px;background:#fbfdff}.qualityItem .qtitle{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;font-weight:700}.qualityItem .qvalue{font-size:19px;font-weight:800;margin-top:7px;color:#27496d}
+.calendarGrid{display:grid;grid-template-columns:repeat(7,minmax(120px,1fr));gap:8px}.calendarDay{border:1px solid var(--line);border-radius:16px;padding:11px;min-height:96px;background:#fbfdff}.calendarDay .date{font-weight:800;color:#27496d;margin-bottom:5px}.calendarDay.problem{background:#ffe2e2}.calendarDay.okday{background:#daf5e8}.calendarDay.warnDay{background:#fff0c9}
+.score{font-weight:800;border-radius:999px;padding:4px 9px;display:inline-block}.score.low{background:#daf5e8;color:#12623a}.score.mid{background:#fff0c9;color:#845600}.score.high{background:#ffe2e2;color:#9b1c1c}.rejectedBox{margin-top:14px}.reason{font-size:12px;color:var(--muted)}
+footer.legal{max-width:1480px;margin:8px auto 18px;padding:0 18px;color:var(--muted);font-size:11px;text-align:center}
+body.dark .qualityItem,body.dark .calendarDay,body.dark .helpCard,body.dark .kpi{background:#172131}body.dark table,body.dark input,body.dark select{background:#111827;color:var(--ink)}body.dark th{background:#1d2c42;color:#e7eefb}body.dark td{background:#111827}body.dark tr:nth-child(even) td{background:#142033}body.dark td:first-child{background:#111827}body.dark button.secondary,body.dark .tab{background:#243247;color:#e7eefb;border-color:#3a4a63}body.dark .tabs{background:#121c2c;border-color:#314158}body.dark .tab.active{background:#4f9cff;color:#07111f}body.dark .codeR{background:#123322}.dark .codeCP{background:#3a2f10}.dark .codeWork{background:#132f4d}.dark .codeEmpty{background:#111827}body.dark .kpi .value,body.dark .helpCard h3,body.dark .qualityItem .qvalue,body.dark .calendarDay .date{color:#88bdf2}
+@media(max-width:1100px){.grid{grid-template-columns:repeat(3,minmax(145px,1fr))}.controls{grid-template-columns:repeat(2,minmax(150px,1fr))}.charts,.helpGrid,.settingsGrid,.qualityGrid{grid-template-columns:1fr}.calendarGrid{grid-template-columns:repeat(2,minmax(120px,1fr))}}
+@media(max-width:700px){main{padding:12px}header{padding:24px 12px 18px}header h1{font-size:22px}.headerbar{flex-direction:column}.headerActions{justify-content:flex-start}.grid,.controls,.calendarGrid{grid-template-columns:1fr}.actionbar button{width:100%}.tabs{gap:6px}.tab{padding:9px 11px;font-size:13px}}
+
+/* ===== AMÉLIORATIONS VISUELLES ET ERGONOMIQUES V03.07 ===== */
+:root{--service:#dff0ff;--rest:#dff7ea;--absence:#fff1cc;--empty:#ffffff;--pair:#efe4ff;--error:#ffe1e1;--heat1:#e9f8ee;--heat2:#fff4cc;--heat3:#ffe0b8;--heat4:#ffd2d2}
+.kpi{position:relative;overflow:hidden}.kpi::after{content:"";position:absolute;right:-22px;bottom:-26px;width:86px;height:86px;border-radius:999px;background:rgba(49,92,134,.08)}
+#smartSearchBox{position:sticky;top:0;z-index:8;margin-bottom:12px;display:grid;grid-template-columns:1fr 160px 160px;gap:10px;align-items:end}.smartPill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;color:var(--muted);margin:3px}
+.agentDrawer{position:fixed;top:0;right:-420px;width:400px;max-width:92vw;height:100vh;background:var(--card);border-left:1px solid var(--line);box-shadow:-14px 0 34px rgba(0,0,0,.18);z-index:50;transition:right .22s ease;padding:18px;overflow:auto}.agentDrawer.open{right:0}.agentDrawerClose{width:auto;float:right;padding:8px 12px}.agentMetric{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px 0;border-bottom:1px solid var(--line)}.agentTimeline{display:flex;gap:3px;margin-top:12px;overflow:auto;padding-bottom:8px}.agentDayDot{width:18px;min-width:18px;height:34px;border-radius:8px;border:1px solid rgba(0,0,0,.06);cursor:pointer}.agentDayDot.work{background:var(--service)}.agentDayDot.rest{background:var(--rest)}.agentDayDot.absence{background:var(--absence)}.agentDayDot.empty{background:var(--empty)}.agentDayDot.pair{background:var(--pair)}
+.legendBox{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}.legendItem{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 9px}.legendColor{width:14px;height:14px;border-radius:5px;border:1px solid rgba(0,0,0,.08)}
+.cellService,.cellRest,.cellAbsence,.cellEmpty,.cellPair{display:block;margin:-9px;padding:9px;min-height:36px;border-radius:9px;font-weight:700}.cellService{background:var(--service);color:#17466f}.cellRest{background:var(--rest);color:#17613d}.cellAbsence{background:var(--absence);color:#765000}.cellEmpty{background:var(--empty);color:#9aa3af}.cellPair{background:var(--pair);color:#533089}.agentClickable:hover td{filter:brightness(.98);cursor:pointer}.highlightCell{outline:3px solid rgba(255,183,3,.75);outline-offset:-3px}
+.scoreBar{width:128px;height:12px;background:#e8edf4;border-radius:999px;overflow:hidden;display:inline-block;vertical-align:middle}.scoreFill{height:100%;background:linear-gradient(90deg,#2f9b6e,#ffb703,#d94b4b);border-radius:999px;display:block}.solutionCard{border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fbff);padding:14px;margin-bottom:10px;display:grid;grid-template-columns:110px 1fr;gap:12px}.solutionRank{font-size:28px;font-weight:900;color:#27496d}.solutionText{line-height:1.4}.heatCell1{background:var(--heat1)!important}.heatCell2{background:var(--heat2)!important}.heatCell3{background:var(--heat3)!important}.heatCell4{background:var(--heat4)!important}
+.floatingTools{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:20}.floatingTools button{width:46px;height:46px;padding:0;border-radius:999px;box-shadow:0 10px 24px rgba(0,0,0,.18)}
+@media(max-width:850px){#smartSearchBox{grid-template-columns:1fr}.solutionCard{grid-template-columns:1fr}.agentDrawer{width:100%;max-width:100vw}.floatingTools{right:10px;bottom:10px}}
+body.dark .legendItem,body.dark .smartPill{background:#172131}body.dark .solutionCard{background:#172131}body.dark .scoreBar{background:#27364b}
+
+
+/* ===== MODULE AGENT / FATIGUE V03.07 ===== */
+.agentVisualHeader{display:flex;justify-content:space-between;gap:14px;align-items:flex-start}
+.agentVisualHeader h2{margin:0 0 4px}
+.agentVisualGrid{display:grid;grid-template-columns:280px 1fr;gap:16px;align-items:stretch}
+.fatigueGaugeCard,.workloadMapCard,.agentBarsCard{border:1px solid var(--line);border-radius:18px;background:#fbfdff;padding:14px}
+.fatigueCircle{width:190px;height:190px;border-radius:50%;margin:12px auto;display:grid;place-items:center;background:conic-gradient(#20845a 0deg,#ffb703 150deg,#d94b4b 300deg,#e7edf5 300deg 360deg);position:relative}
+.fatigueCircle::before{content:"";position:absolute;width:132px;height:132px;border-radius:50%;background:var(--card)}
+.fatigueValue{position:relative;z-index:1;text-align:center;font-size:34px;font-weight:900;color:#27496d}
+.fatigueValue span{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-top:4px}
+.fatigueLevel{display:inline-block;border-radius:999px;padding:6px 10px;font-size:12px;font-weight:800}
+.fatigueLow{background:#daf5e8;color:#12623a}.fatigueMedium{background:#fff0c9;color:#845600}.fatigueHigh{background:#ffe0b8;color:#92400e}.fatigueCritical{background:#ffe2e2;color:#9b1c1c}
+.agentHeatmap{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));gap:7px}
+.hmCell{min-height:50px;border-radius:12px;border:1px solid rgba(0,0,0,.07);padding:5px;text-align:center;font-size:11px;font-weight:800;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.hmWork1{background:#e6f4ff;color:#17466f}.hmWork2{background:#cfe8ff;color:#17466f}.hmWork3{background:#fff0c9;color:#845600}.hmWork4{background:#ffe0b8;color:#92400e}.hmWork5{background:#ffe2e2;color:#9b1c1c}
+.hmRest{background:#daf5e8;color:#12623a}.hmAbs{background:#fff3d7;color:#765000}.hmEmpty{background:#fff;color:#9aa3af}.hmPair{outline:3px solid rgba(111,66,193,.24)}
+.agentBarRow{display:grid;grid-template-columns:150px 1fr 52px;gap:10px;align-items:center;margin:10px 0}
+.agentBarTrack{height:14px;background:#e8edf4;border-radius:999px;overflow:hidden}.agentBarFill{height:100%;border-radius:999px;background:linear-gradient(90deg,#20845a,#ffb703,#d94b4b)}
+.agentRiskText{line-height:1.45}.agentRiskText li{margin-bottom:5px}
+body.dark .fatigueGaugeCard,body.dark .workloadMapCard,body.dark .agentBarsCard{background:#172131}
+body.dark .fatigueValue{color:#88bdf2}
+@media(max-width:900px){.agentVisualGrid{grid-template-columns:1fr}.agentVisualHeader{flex-direction:column}.agentVisualHeader button{width:100%}.agentBarRow{grid-template-columns:1fr}}
+
+
+/* ===== ONGLET CHARGE DE TRAVAIL ===== */
+.workloadWrap{max-height:680px}.workloadIntro h2{margin-top:0}.heatBadge{display:inline-flex;align-items:center;justify-content:center;min-width:86px;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900}.heatLow{background:#daf5e8;color:#12623a}.heatMedium{background:#fff0c9;color:#845600}.heatHigh{background:#ffe0b8;color:#92400e}.heatCritical{background:#ffe2e2;color:#9b1c1c}.workloadScore{font-weight:900;font-size:15px}.workloadBar{height:12px;min-width:110px;background:#e8edf4;border-radius:999px;overflow:hidden;display:inline-block;vertical-align:middle}.workloadBarFill{height:100%;border-radius:999px;background:linear-gradient(90deg,#20845a,#ffb703,#d94b4b)}.workloadHint{font-size:12px;line-height:1.35;color:var(--muted);white-space:normal;min-width:240px;text-align:left}.workloadHeat1{background:#daf5e8!important}.workloadHeat2{background:#fff0c9!important}.workloadHeat3{background:#ffe0b8!important}.workloadHeat4{background:#ffe2e2!important}.workloadAgentCell{text-align:left;font-weight:900}.workloadTableMini{font-size:11px;color:var(--muted);display:block;margin-top:3px}.dark .workloadBar{background:#27364b}
+
+
+
+/* ===== AMÉLIORATIONS V03.12 : ANIMATIONS, SKELETON, TRI, PDF FILTRABLE ===== */
+.view{display:block;opacity:0;visibility:hidden;height:0;overflow:hidden;transform:translateY(8px);transition:opacity .18s ease,transform .18s ease,visibility .18s ease}
+.view.active{opacity:1;visibility:visible;height:auto;overflow:visible;transform:translateY(0)}
+.kpi{opacity:0;transform:translateY(10px);animation:kpiIn .34s cubic-bezier(.32,.72,0,1) forwards}
+.kpi:nth-child(1){animation-delay:.02s}.kpi:nth-child(2){animation-delay:.06s}.kpi:nth-child(3){animation-delay:.10s}.kpi:nth-child(4){animation-delay:.14s}.kpi:nth-child(5){animation-delay:.18s}.kpi:nth-child(6){animation-delay:.22s}
+@keyframes kpiIn{to{opacity:1;transform:translateY(0)}}
+.agentDrawer{transition:right .34s cubic-bezier(0.32,0.72,0,1),box-shadow .34s cubic-bezier(0.32,0.72,0,1)}
+.scoreFill,.workloadBarFill,.agentBarFill{width:0;transition:width .65s cubic-bezier(.32,.72,0,1)}
+.workloadBarFill[data-final],.scoreFill[data-final],.agentBarFill[data-final]{width:var(--final-width)!important}
+.rowFade{animation:rowFade .18s ease both}@keyframes rowFade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.kpi.kpiCritical{border-color:rgba(217,75,75,.55);background:linear-gradient(180deg,#fff5f5,#ffffff)}
+.kpi.kpiWarn{border-color:rgba(255,183,3,.65);background:linear-gradient(180deg,#fff8df,#ffffff)}
+.kpi.kpiOk{border-color:rgba(32,132,90,.35);background:linear-gradient(180deg,#effaf4,#ffffff)}
+body.dark .kpi.kpiCritical{background:linear-gradient(180deg,#341b21,#172131)}
+body.dark .kpi.kpiWarn{background:linear-gradient(180deg,#302711,#172131)}
+body.dark .kpi.kpiOk{background:linear-gradient(180deg,#10291d,#172131)}
+#parseSkeleton{display:none;margin-top:12px;border:1px solid var(--line);border-radius:16px;padding:12px;background:var(--card)}
+body.loadingExcel #parseSkeleton{display:block}.skeletonLine{height:13px;border-radius:999px;margin:8px 0;background:linear-gradient(90deg,#e7edf5,#f8fbff,#e7edf5);background-size:220% 100%;animation:skeletonMove 1s linear infinite}.skeletonLine:nth-child(2){width:76%}.skeletonLine:nth-child(3){width:52%}@keyframes skeletonMove{to{background-position:-220% 0}}
+th.sortable{cursor:pointer;user-select:none}th.sortable::after{content:' ↕';font-size:10px;color:var(--muted)}th.sortAsc::after{content:' ↑'}th.sortDesc::after{content:' ↓'}
+.exportOptions{border:1px dashed var(--line);border-radius:16px;padding:12px;margin-top:12px;background:#fbfdff}body.dark .exportOptions{background:#172131}
+.drawerNav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 12px}.drawerNav button{padding:9px 10px}
+#undoRecalcBtn:disabled{opacity:.45;cursor:not-allowed;filter:grayscale(1)}
+
+
+
+/* ===== MODULE DROITS D'UTILISATION / EXPIRATION ===== */
+.gc-license-banner{
+  display:none;
+  position:sticky;
+  top:0;
+  z-index:9998;
+  margin:0;
+  padding:12px 18px;
+  background:linear-gradient(135deg,#fff7df,#fff1bd);
+  color:#513b00;
+  border-bottom:1px solid rgba(199,131,0,.35);
+  box-shadow:0 8px 22px rgba(24,41,75,.10);
+  font-size:14px;
+  line-height:1.35;
+}
+.gc-license-banner.show{display:block;}
+.gc-license-banner strong{font-weight:900;}
+body.dark .gc-license-banner{background:linear-gradient(135deg,#3b2b09,#4a3507);color:#ffe8a3;border-color:rgba(255,195,90,.35)}
+.gc-license-modal-backdrop{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:rgba(8,15,28,.72);
+  backdrop-filter:blur(6px);
+  padding:20px;
+}
+.gc-license-modal-backdrop.show{display:flex;}
+.gc-license-modal{
+  width:min(680px,96vw);
+  background:var(--card,#fff);
+  color:var(--ink,#172033);
+  border:1px solid var(--line,#d6deea);
+  border-radius:24px;
+  box-shadow:0 28px 80px rgba(0,0,0,.42);
+  overflow:hidden;
+}
+.gc-license-modal-head{
+  padding:22px 24px;
+  color:#fff;
+  background:linear-gradient(135deg,#243b5a,#315c86 70%,#c78300);
+  border-bottom:4px solid var(--accent,#ffb703);
+}
+.gc-license-modal-head .gc-icon{
+  width:52px;
+  height:52px;
+  border-radius:18px;
+  display:grid;
+  place-items:center;
+  background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.32);
+  font-size:28px;
+  margin-bottom:12px;
+}
+.gc-license-modal h2{margin:0;font-size:24px;line-height:1.2;}
+.gc-license-modal-body{padding:22px 24px;line-height:1.5;}
+.gc-license-modal-body p{margin:0 0 12px;}
+.gc-license-countdown{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin:16px 0;
+}
+.gc-license-countdown div{
+  border:1px solid var(--line,#d6deea);
+  border-radius:16px;
+  background:var(--soft,#f7f9fc);
+  padding:12px;
+  text-align:center;
+}
+.gc-license-countdown b{display:block;font-size:24px;color:#27496d;}
+.gc-license-countdown span{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted,#687386);font-weight:800;}
+body.dark .gc-license-countdown b{color:#88bdf2;}
+.gc-license-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding:0 24px 24px;
+}
+.gc-license-actions button{width:auto;min-width:150px;}
+.gc-license-expired{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:26px;
+  background:radial-gradient(circle at top left,rgba(217,75,75,.16),transparent 34%),linear-gradient(180deg,#0b1220,#111827);
+  color:white;
+  font-family:Arial,Helvetica,sans-serif;
+}
+.gc-license-expired-card{
+  width:min(720px,96vw);
+  background:rgba(23,33,49,.96);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:26px;
+  padding:34px;
+  text-align:center;
+  box-shadow:0 30px 90px rgba(0,0,0,.45);
+}
+.gc-license-expired-card .gc-icon{
+  width:68px;height:68px;border-radius:22px;display:grid;place-items:center;margin:0 auto 16px;background:rgba(217,75,75,.18);border:1px solid rgba(255,116,116,.35);font-size:34px;
+}
+.gc-license-expired-card h1{margin:0 0 12px;font-size:30px;}
+.gc-license-expired-card p{margin:10px 0;color:#dce8f7;line-height:1.5;}
+@media(max-width:700px){.gc-license-countdown{grid-template-columns:1fr}.gc-license-actions{flex-direction:column}.gc-license-actions button{width:100%}}
+
+</style>
+</head>
+<body>
+<header style="position:relative;">
+<div style="position:absolute;top:6px;left:10px;font-size:11px;color:#ffffff;opacity:0.8;">V03.16</div>
+  <div class="headerbar">
+    <div>
+      <h1 data-i18n="appTitle">Aide dans l’analyse de la programmation</h1>
+      <p data-i18n="appSubtitle">Charge un fichier Excel, la feuille “Modifications faite” est analysée en priorité. Si elle n’existe pas, la première feuille est utilisée.</p>
+    </div>
+    <div class="headerActions">
+      <button id="helpToggle" class="helpToggle" type="button" title="Ouvrir l’aide" aria-label="Ouvrir l’aide">💡</button>
+      <button class="langBtn activeLang" type="button" data-lang="fr" title="Français" aria-label="Français">🇫🇷</button>
+      <button id="themeToggle" class="themeToggle" type="button" title="Activer le mode sombre" aria-label="Activer le mode sombre">🌙</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<div id="agentDrawer" class="agentDrawer"><button id="agentDrawerClose" class="agentDrawerClose secondary" type="button">Fermer</button><div id="agentDrawerContent"></div></div>
+<div class="floatingTools"><button id="scrollTopBtn" title="Remonter" type="button">↑</button><button id="scrollPlanningBtn" title="Planning" type="button">▦</button></div>
+
+  <section class="panel">
+    <div class="controls">
+      <div>
+        <label>Fichier Excel</label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.xlsm">
+      </div>
+      <div>
+        <label>Feuille analysée</label>
+        <select id="sheetSelect"></select>
+      </div>
+      <div>
+        <label>Codes repos</label>
+        <input id="restCodes" value="R,RP,REPOS">
+      </div>
+      <div>
+        <label>Codes absence / non travaillé</label>
+        <input id="absenceCodes" value="CP,CA,FORMATION,MALADIE,ABS">
+      </div>
+      <div>
+        <label>Seuil jours consécutifs</label>
+        <input id="maxConsec" type="number" value="5" min="1">
+      </div>
+      <div>
+        <label>Repos minimum par agent</label>
+        <input id="minRestAgent" type="number" value="8" min="0">
+      </div>
+    </div>
+    <div class="controls" style="margin-top:10px;grid-template-columns:repeat(5,minmax(150px,1fr))">
+      <div>
+        <label>Mode journée non couverte</label>
+        <select id="uncoveredMode">
+          <option value="zero">Date sans aucun agent en service</option>
+          <option value="coverage">Date avec moins de X agents en service</option>
+        </select>
+      </div>
+      <div>
+        <label>Minimum agents en service par date</label>
+        <input id="minCoverage" type="number" value="1" min="1">
+      </div>
+      <div>
+        <label>Type de programmation</label>
+        <select id="programSite">
+          <option value="paris">Paris : 400→401 obligatoires</option>
+          <option value="lyon">Lyon : 300→301 et 600→601 obligatoires</option>
+        </select>
+      </div>
+      <div>
+        <label>Recherche agent</label>
+        <input id="agentSearch" placeholder="Nom, matricule...">
+      </div>
+      <div>
+        <label>Action</label>
+        <button id="recalcBtn" class="secondary">Recalculer</button><button id="undoRecalcBtn" class="secondary" type="button" disabled>Annuler le recalcul</button>
+      </div>
+    </div>
+    <p class="small" id="status">Aucun fichier chargé.</p>
+    <div id="autoSaveInfo" class="small" style="margin-top:8px;padding:10px 12px;border:1px dashed var(--line);border-radius:14px;background:var(--soft);display:none;"></div>
+    <div class="actionbar" id="autoSaveActions" style="margin-top:8px;display:none;">
+      <button id="clearSavedPlanningBtn" class="secondary" type="button">🗑 Effacer le planning mémorisé</button>
+    </div>
+    <div id="parseSkeleton"><div class="small">Lecture du fichier Excel en cours…</div><div class="skeletonLine"></div><div class="skeletonLine"></div><div class="skeletonLine"></div></div>
+  </section>
+
+  <section class="grid" id="kpis"></section>
+
+  <section class="panel">
+    <div class="tabs">
+      <button class="tab active" data-view="dashboard" data-i18n="tabDashboard">Tableau de bord</button>
+      <button class="tab" data-view="agents" data-i18n="tabAgents">Agents</button>
+      <button class="tab" data-view="workload" data-i18n="tabWorkload">Charge de travail</button>
+      <button class="tab" data-view="anomalies" data-i18n="tabAnomalies">Anomalies</button>
+      <button class="tab" data-view="solutions" data-i18n="tabSolutions">Solution(s) possible(s)</button>
+      <button class="tab" data-view="planning" data-i18n="tabPlanning">Vue planning</button>
+      <button class="tab" data-view="calendar" data-i18n="tabCalendar">Calendrier</button>
+      <button class="tab" data-view="method" data-i18n="tabMethod">Méthode</button>
+      <button class="tab" data-view="help" data-i18n="tabHelp">Aide</button>
+    </div>
+
+
+    <div id="settings" class="view">
+      <div class="panel">
+        <h2>Paramètres d’analyse</h2>
+        <p class="small">Ces paramètres sont utilisés uniquement pendant la session ouverte. Aucun réglage n’est sauvegardé localement.</p>
+        <div class="settingsGrid">
+          <div>
+            <label>Codes repos</label>
+            <input id="settingsRestCodes" value="">
+          </div>
+          <div>
+            <label>Codes absence / non travaillé</label>
+            <input id="settingsAbsenceCodes" value="">
+          </div>
+          <div>
+            <label>Seuil jours consécutifs</label>
+            <input id="settingsMaxConsec" type="number" value="5" min="1">
+          </div>
+          <div>
+            <label>Repos minimum par agent</label>
+            <input id="settingsMinRestAgent" type="number" value="8" min="0">
+          </div>
+          <div>
+            <label>Nom de la ligne TAS</label>
+            <input id="tasLabel" value="TAS">
+          </div>
+          <div>
+            <label>Type de programmation</label>
+            <select id="settingsProgramSite">
+              <option value="paris">Paris : 400→401 obligatoires</option>
+              <option value="lyon">Lyon : 300→301 et 600→601 obligatoires</option>
+            </select>
+          </div>
+          <div>
+            <label>Journées liées selon le site</label>
+            <input id="linkedPairs" value="300>301,600>601">
+          </div>
+        </div>
+        <div class="actionbar" style="margin-top:12px">
+          <button id="applySettingsBtn" class="secondary">Appliquer les paramètres</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="quality" class="view">
+      <div class="panel">
+        <h2>Contrôle qualité du fichier</h2>
+        <p class="small">Cette section vérifie si le fichier chargé semble exploitable avant d’interpréter les résultats.</p>
+        <div class="qualityGrid" id="qualityGrid"></div>
+      </div>
+      <div class="panel">
+        <h3>Points de vigilance</h3>
+        <div class="tablewrap"><table id="qualityTable"></table></div>
+      </div>
+    </div>
+
+    <div id="dashboard" class="view active">
+      <div class="actionbar">
+        <button id="exportFullReportPdfBtn" class="pdf">📄 Exporter le rapport complet PDF</button>
+        <button id="exportAllBtn" class="export">Tout exporter</button>
+      </div>
+      <div class="charts">
+        <div class="panel"><canvas id="chartWork"></canvas></div>
+        <div class="panel"><canvas id="chartRest"></canvas></div>
+      </div>
+      <div class="charts">
+        <div class="panel"><canvas id="chartCoverage"></canvas></div>
+        <div class="panel"><canvas id="chartCodes"></canvas></div>
+      </div>
+    </div>
+
+    <div id="agents" class="view">
+      <div class="actionbar">
+        <button id="exportAgentsExcelBtn" class="export">Exporter les agents en Excel</button>
+        <button id="exportAgentsPdfBtn" class="pdf">📄 Exporter les agents en PDF</button>
+      </div>
+      <div class="tablewrap"><table id="agentsTable"></table></div>
+    </div>
+
+    <div id="workload" class="view">
+      <div class="panel workloadIntro">
+        <h2>Charge de travail</h2>
+        <p class="small">Tableau de synthèse par agent : charge, repos, fatigue, stress et vigilance. Le score fatigue est maintenant basé sur 140 h pour 28 jours : en dessous la charge reste faible ou maîtrisée, à 140 h elle devient normale, puis elle monte progressivement selon les heures, les repos et les séquences de travail.</p>
+        <div class="legendBox">
+          <span class="legendItem"><span class="legendColor" style="background:#daf5e8"></span>Faible</span>
+          <span class="legendItem"><span class="legendColor" style="background:#fff0c9"></span>Modéré</span>
+          <span class="legendItem"><span class="legendColor" style="background:#ffe0b8"></span>Élevé</span>
+          <span class="legendItem"><span class="legendColor" style="background:#ffe2e2"></span>Critique</span>
+        </div>
+        <div class="controls" style="grid-template-columns:repeat(3,minmax(150px,1fr));margin-top:10px">
+          <div>
+            <label>Filtrer un agent</label>
+            <input id="workloadSearch" placeholder="Nom ou matricule">
+          </div>
+          <div>
+            <label>Tri du tableau</label>
+            <select id="workloadSort">
+              <option value="risk">Risque le plus fort</option>
+              <option value="hours">Heures les plus hautes</option>
+              <option value="rest">Repos les plus faibles</option>
+              <option value="stress">Stress le plus fort</option>
+            </select>
+          </div>
+          <div>
+            <label>Export</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button id="exportWorkloadExcelBtn" class="export" type="button">Excel</button>
+              <button id="exportWorkloadPdfBtn" class="pdf" type="button">PDF</button>
+            </div>
+          </div>
+        </div>
+        <div class="exportOptions">
+          <div class="controls" style="grid-template-columns:repeat(4,minmax(150px,1fr))">
+            <div><label>PDF : agent(s)</label><input id="pdfAgentFilter" placeholder="Tous ou nom d’agent"></div>
+            <div><label>PDF : date début</label><select id="pdfDateStart"><option value="">Toutes</option></select></div>
+            <div><label>PDF : date fin</label><select id="pdfDateEnd"><option value="">Toutes</option></select></div>
+            <div><label>PDF : contenu</label><select id="pdfOnlyVisible"><option value="yes">Filtre visible + options PDF</option><option value="no">Tous les agents + options PDF</option></select></div>
+          </div>
+          <p class="small">L’export PDF de la charge de travail peut maintenant être limité à une plage de dates et/ou à un agent.</p>
+        </div>
+      </div>
+      <div class="tablewrap workloadWrap"><table id="workloadTable"></table></div>
+    </div>
+
+    <div id="anomalies" class="view">
+      <div class="actionbar">
+        <button id="exportAnomaliesBtn" class="export">Exporter les anomalies en Excel</button>
+        <button id="exportAnomaliesPdfBtn" class="pdf">📄 Exporter les anomalies en PDF</button>
+      </div>
+      <div class="tablewrap"><table id="anomaliesTable"></table></div>
+    </div>
+
+    <div id="solutions" class="view">
+      <div class="panel">
+        <p>Suggestions automatiques pour couvrir les journées non attribuées détectées sous la ligne TAS.</p>
+        <p class="small">Une proposition est affichée uniquement si l’agent est en repos ce jour-là, si le retrait du repos ne fait pas passer l’agent sous le minimum de repos, et si la règle des jours consécutifs suivis de deux repos reste respectée.</p>
+        <p class="small">Règles liées prises en compte : Paris = 400→401 obligatoire ; Lyon = 300→301 et 600→601 obligatoires. Les solutions sont proposées en bloc indissociable quand une journée liée est détectée.</p>
+      </div>
+      <div class="actionbar">
+        <button id="exportSolutionsExcelBtn" class="export">Exporter les solutions en Excel</button>
+        <button id="exportSolutionsPdfBtn" class="pdf">📄 Exporter les solutions en PDF</button>
+      </div>
+      <div class="tablewrap"><table id="solutionsTable"></table></div>
+      <div class="panel rejectedBox">
+        <h3 data-i18n="rejectedTitle">Agents écartés par l’optimisation</h3>
+        <p class="small" data-i18n="rejectedText">Cette liste explique pourquoi certains agents ne peuvent pas être proposés pour couvrir une journée TAS.</p>
+        <div class="actionbar">
+          <button id="exportRejectedExcelBtn" class="export" type="button">Exporter les agents écartés en Excel</button>
+          <button id="exportRejectedPdfBtn" class="pdf" type="button">📄 Exporter les agents écartés en PDF</button>
+        </div>
+        <div class="tablewrap"><table id="rejectedTable"></table></div>
+      </div>
+    </div>
+
+    <div id="planning" class="view">
+      <div class="actionbar">
+        <button id="exportPlanningExcelBtn" class="export">Exporter le planning en Excel</button>
+        <button id="exportPlanningPdfBtn" class="pdf">📄 Exporter le planning en PDF</button>
+      </div>
+      <div class="legendBox"><span class="legendItem"><span class="legendColor" style="background:var(--service)"></span>Service</span><span class="legendItem"><span class="legendColor" style="background:var(--rest)"></span>Repos</span><span class="legendItem"><span class="legendColor" style="background:var(--absence)"></span>Absence</span><span class="legendItem"><span class="legendColor" style="background:var(--pair)"></span>Journée liée</span></div>
+      <div class="tablewrap"><table id="planningTable"></table></div>
+    </div>
+
+
+
+    <div id="calendar" class="view">
+      <div class="panel">
+        <h2>Vue calendrier</h2>
+        <p class="small">Vert : journée couverte. Rouge : au moins un service non attribué sous TAS. Jaune : couverture faible selon les paramètres.</p>
+        <div id="calendarGrid" class="calendarGrid"></div>
+      </div>
+    </div>
+
+    <div id="help" class="view">
+      <div class="panel">
+        <h2>Manuel d’utilisation du logiciel</h2>
+        <p>Ce logiciel sert à analyser automatiquement un fichier Excel de programmation. Il lit le planning, détecte les agents, les repos, les absences, les journées non couvertes, les anomalies réglementaires et propose des solutions possibles.</p>
+        <p class="small">L’analyse se fait directement dans le navigateur. Le fichier Excel d’origine n’est pas modifié.</p>
+      </div>
+
+      <div class="helpGrid">
+        <div class="helpCard">
+          <h3>1. Démarrer le logiciel</h3>
+          <ul>
+            <li>Ouvre le fichier dans ton navigateur.</li>
+            <li>Le logiciel fonctionne hors ligne une fois ouvert, sauf pour les bibliothèques externes si elles ne sont pas déjà disponibles dans le cache du navigateur.</li>
+            <li>Le bouton 🌙 permet de passer en mode sombre. Le bouton ☀️ permet de revenir au mode clair.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>2. Charger un fichier Excel</h3>
+          <ul>
+            <li>Clique sur “Fichier Excel”.</li>
+            <li>Sélectionne un fichier au format .xlsx, .xls ou .xlsm.</li>
+            <li>Le logiciel recherche en priorité la feuille “Modifications faite”.</li>
+            <li>Si cette feuille n’existe pas, la première feuille disponible est utilisée.</li>
+            <li>Tu peux changer la feuille analysée avec le menu “Feuille analysée”.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>3. Sauvegarde automatique</h3>
+          <ul>
+            <li>Après chargement d’un fichier Excel, le planning est mémorisé automatiquement dans le navigateur.</li>
+            <li>Quand tu fermes puis rouvres le même fichier sur le même navigateur, le dernier planning se recharge automatiquement.</li>
+            <li>Si tu charges un nouveau fichier Excel, il remplace automatiquement l’ancien planning mémorisé.</li>
+            <li>Le bouton “Effacer le planning mémorisé” supprime la sauvegarde locale.</li>
+          </ul>
+          <p class="small">Important : cette sauvegarde reste liée au navigateur utilisé. Si tu ouvres le HTML sur un autre ordinateur ou un autre navigateur, le planning mémorisé ne suivra pas.</p>
+        </div>
+
+        <div class="helpCard">
+          <h3>4. Structure Excel attendue</h3>
+          <ul>
+            <li>Une ligne doit contenir les dates du planning.</li>
+            <li>Les agents doivent être placés en lignes, avec leurs journées sous les dates.</li>
+            <li>La ligne située sous chaque agent peut contenir les temps de travail.</li>
+            <li>La zone TAS sert à identifier les journées non attribuées ou non couvertes.</li>
+            <li>Le logiciel peut lire une structure proche d’un planning classique, mais il dépend de la cohérence du fichier Excel.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>5. Paramètres principaux</h3>
+          <ul>
+            <li>Codes repos : exemples R, RP, REPOS.</li>
+            <li>Codes absence : exemples CP, CA, FORMATION, MALADIE, ABS.</li>
+            <li>Seuil jours consécutifs : 5 par défaut.</li>
+            <li>Repos minimum par agent : 8 par défaut.</li>
+            <li>Minimum agents en service par date : utilisé pour contrôler la couverture.</li>
+            <li>Type de programmation : Paris ou Lyon.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>6. Règles Paris / Lyon</h3>
+          <ul>
+            <li>Paris : la journée 400 doit être suivie de 401.</li>
+            <li>Paris : les journées 300/301 et 600/601 ne sont pas imposées en couple.</li>
+            <li>Lyon : la journée 300 doit être suivie de 301.</li>
+            <li>Lyon : la journée 600 doit être suivie de 601.</li>
+            <li>Ces règles sont utilisées dans les anomalies et dans les solutions proposées.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>7. Tableau de bord</h3>
+          <ul>
+            <li>Affiche les indicateurs principaux du fichier analysé.</li>
+            <li>Présente des graphiques sur le travail, les repos, la couverture et les codes détectés.</li>
+            <li>Permet d’exporter un rapport complet en PDF.</li>
+            <li>Le bouton “Tout exporter” lance les exports disponibles.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>8. Onglet Agents</h3>
+          <ul>
+            <li>Liste chaque agent détecté dans le fichier.</li>
+            <li>Affiche les jours travaillés, repos, absences, cases vides et heures totales.</li>
+            <li>Un clic sur un agent ouvre une fiche détaillée.</li>
+            <li>La fiche agent permet de visualiser la charge, les séquences et les points de vigilance.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>9. Onglet Charge de travail</h3>
+          <ul>
+            <li>Analyse la fatigue potentielle de chaque agent.</li>
+            <li>Le score tient compte des heures, des repos, des absences et des séquences de travail.</li>
+            <li>La base de référence est 140 heures sur 28 jours.</li>
+            <li>Des couleurs permettent d’identifier rapidement les niveaux faible, modéré, élevé ou critique.</li>
+            <li>L’export PDF peut être filtré par agent et par plage de dates.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>10. Onglet Anomalies</h3>
+          <ul>
+            <li>Affiche les problèmes détectés automatiquement.</li>
+            <li>Exemples : journée TAS non couverte, repos insuffisants, trop de jours consécutifs, journée liée manquante.</li>
+            <li>Les anomalies dépendent des paramètres sélectionnés en haut de page.</li>
+            <li>Après changement de paramètre, clique sur “Recalculer”.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>11. Onglet Solutions possibles</h3>
+          <ul>
+            <li>Propose des agents pouvant couvrir une journée non attribuée sous TAS.</li>
+            <li>Le logiciel vérifie que l’agent est en repos sur la date concernée.</li>
+            <li>Il vérifie aussi que le minimum de repos reste respecté.</li>
+            <li>Il évite de créer une séquence de travail non conforme.</li>
+            <li>Les agents refusés sont listés avec la raison du refus.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>12. Onglet Vue planning</h3>
+          <ul>
+            <li>Affiche le planning sous forme de tableau proche d’un Excel.</li>
+            <li>Les couleurs permettent de distinguer les services, repos, absences et journées liées.</li>
+            <li>Un clic sur une ligne agent permet d’ouvrir le détail de l’agent.</li>
+            <li>Le bouton flottant ▦ permet de revenir rapidement à la vue planning.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>13. Onglet Calendrier</h3>
+          <ul>
+            <li>Affiche une vision par date.</li>
+            <li>Vert : journée correctement couverte.</li>
+            <li>Jaune : couverture faible selon les paramètres.</li>
+            <li>Rouge : au moins une journée non couverte ou problématique.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>14. Exports disponibles</h3>
+          <ul>
+            <li>Agents : Excel et PDF.</li>
+            <li>Anomalies : Excel et PDF.</li>
+            <li>Solutions possibles : Excel et PDF.</li>
+            <li>Vue planning : Excel et PDF.</li>
+            <li>Charge de travail : Excel et PDF filtrable.</li>
+            <li>Rapport complet : PDF.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>15. Boutons utiles</h3>
+          <ul>
+            <li>Recalculer : relance l’analyse avec les paramètres actuels.</li>
+            <li>Annuler le recalcul : revient à l’état précédent si disponible.</li>
+            <li>↑ : remonte en haut de la page.</li>
+            <li>▦ : ouvre rapidement la vue planning.</li>
+            <li>💡 : ouvre ce manuel d’utilisation.</li>
+          </ul>
+        </div>
+
+        <div class="helpCard">
+          <h3>16. Limites importantes</h3>
+          <ul>
+            <li>Le logiciel dépend de la structure du fichier Excel chargé.</li>
+            <li>Un fichier très différent du modèle peut être mal interprété.</li>
+            <li>Le logiciel aide à détecter les erreurs, mais ne remplace pas une validation humaine.</li>
+            <li>La sauvegarde automatique ne modifie pas le fichier Excel source.</li>
+            <li>La sauvegarde automatique ne crée pas un nouveau fichier : elle garde les données dans le navigateur.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div id="method" class="view">
+      <div class="panel">
+        <p>Détection automatique utilisée :</p>
+        <ul>
+          <li>Recherche de la ligne contenant les dates Excel ou dates lisibles.</li>
+          <li>Les colonnes de planning sont les colonnes contenant une date.</li>
+          <li>Une ligne agent est retenue si elle contient un nom à gauche et des codes de service dans les colonnes datées.</li>
+          <li>La ligne située juste dessous est utilisée pour les temps de travail quand elle contient des durées numériques.</li>
+          <li>Les codes repos et absence sont modifiables dans les paramètres.</li>
+          <li>Une anomalie “plus de 5 jours” est déclenchée si une séquence de travail dépasse le seuil et n’est pas suivie de deux repos.</li>
+          <li>Le choix “Paris” autorise une journée 300 seule : aucun 301 n’est exigé derrière.</li>
+          <li>Le choix “Lyon” impose les enchaînements 300 → 301 et 600 → 601 dans les anomalies et dans les solutions proposées.</li>
+          <li>Les journées non couvertes sont recherchées uniquement sous la ligne “TAS”. Tout ce qui se trouve sous cette ligne est considéré comme non couvert jusqu’au prochain bloc de dates.</li>
+          <li>Les solutions possibles cherchent les agents en repos sur une journée non couverte. En mode Lyon, une proposition pour 300 inclut obligatoirement 301, et une proposition pour 600 inclut obligatoirement 601, sans enfreindre le minimum de repos ni la règle des jours consécutifs.</li>
+        </ul>
+        <p class="small">Le fichier ne modifie jamais ton Excel : l’analyse se fait uniquement dans le navigateur.</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="legal">© copyright GC, toute utilisation sans l'accord du propriétaire est totalement interdite, le propriétaire ne pourra être tenu responsable en cas de non fonctionnement correct du logiciel.</footer>
+
+<script>
+let workbook = null, rawRows = [], currentSheetName = null;
+let charts = [];
+let lastResult = null;
+
+// Sauvegarde automatique du dernier Excel chargé dans le navigateur.
+// Le fichier HTML reste le même : le dernier planning est restauré au prochain démarrage.
+const GC_AUTOSAVE_KEY = "gc_planning_v03_14_last_excel";
+let persistedSheets = null;
+let currentFileName = "";
+let isRestoringSavedPlanning = false;
+
+const $ = id => document.getElementById(id);
+
+function excelDateToJS(serial){
+  if(typeof serial === "number" && serial > 25000 && serial < 70000){
+    const utc_days = Math.floor(serial - 25569);
+    const date = new Date(utc_days * 86400 * 1000);
+    return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  }
+  if(serial instanceof Date && !isNaN(serial)) return serial;
+  if(typeof serial === "string"){
+    const s = serial.trim();
+    const m = s.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})$/);
+    if(m){
+      let y = +m[3]; if(y < 100) y += 2000;
+      return new Date(y, +m[2]-1, +m[1]);
+    }
+  }
+  return null;
+}
+
+function fmtDate(d){
+  if(!d) return "";
+  return d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"});
+}
+
+function norm(v){ return String(v ?? "").trim().toUpperCase(); }
+function isEmpty(v){ return v === null || v === undefined || String(v).trim() === ""; }
+function isDuration(v){ return typeof v === "number" && v >= 0 && v < 1.5; }
+function hours(v){ return isDuration(v) ? v * 24 : 0; }
+
+function parseList(id){
+  return $(id).value.split(",").map(x=>norm(x)).filter(Boolean);
+}
+
+function getProgramSite(){
+  return $("programSite")?.value || "paris";
+}
+
+function parsePairList(raw){
+  return raw.split(",").map(x=>x.trim()).filter(Boolean).map(pair=>{
+    const parts = pair.split(">").map(p=>p.trim());
+    return parts.length === 2 ? {from:parts[0], to:parts[1]} : null;
+  }).filter(Boolean);
+}
+
+function getSiteLinkedPairs(){
+  const site = getProgramSite();
+  if(site === "paris") return [{from:"400", to:"401"}];
+  if(site === "lyon") return parsePairList($("linkedPairs")?.value || "300>301,600>601");
+  return [];
+}
+
+function parseLinkedPairs(){
+  return getSiteLinkedPairs();
+}
+
+function getProgramSiteLabel(){
+  return getProgramSite() === "lyon" ? "Lyon" : "Paris";
+}
+
+function classify(code, restCodes, absenceCodes){
+  const c = norm(code);
+  if(!c) return "empty";
+  if(restCodes.includes(c)) return "rest";
+  if(absenceCodes.includes(c)) return "absence";
+  return "work";
+}
+
+function findDateRow(rows){
+  let best = {row:-1, cols:[]};
+  const scanLimit = Math.min(rows.length, 20);
+  for(let r=0;r<scanLimit;r++){
+    const cols = [];
+    for(let c=0;c<(rows[r]||[]).length;c++){
+      const d = excelDateToJS(rows[r][c]);
+      if(d) cols.push({col:c, date:d});
+    }
+    if(cols.length > best.cols.length) best = {row:r, cols};
+  }
+  return best;
+}
+
+function detectNameColumn(rows, dateRow, dateCols){
+  const firstDateCol = Math.min(...dateCols.map(x=>x.col));
+  let bestCol = 0, bestCount = -1;
+  for(let c=0;c<Math.max(1, firstDateCol);c++){
+    let count=0;
+    for(let r=dateRow+1;r<rows.length;r++){
+      const v = rows[r]?.[c];
+      if(typeof v === "string" && v.trim().length >= 3) count++;
+    }
+    if(count > bestCount){ bestCount=count; bestCol=c; }
+  }
+  return bestCol;
+}
+
+
+function violatesConsecutiveRule(days, maxConsec){
+  let i = 0;
+  while(i < days.length){
+    if(days[i].type !== "work"){ i++; continue; }
+    const start = i;
+    while(i < days.length && days[i].type === "work") i++;
+    const len = i - start;
+    const followedByTwoR = days[i]?.type === "rest" && days[i+1]?.type === "rest";
+    if(len > maxConsec && !followedByTwoR){
+      return {
+        ok:false,
+        start,
+        end:i-1,
+        len,
+        after1:days[i]?.code || "vide",
+        after2:days[i+1]?.code || "vide"
+      };
+    }
+  }
+  return {ok:true};
+}
+
+function longestWorkSequence(days){
+  let best = 0, current = 0;
+  for(const d of days){
+    if(d.type === "work"){ current++; best = Math.max(best, current); }
+    else current = 0;
+  }
+  return best;
+}
+
+function rowDateCount(row){
+  let n = 0;
+  for(const v of (row || [])){
+    if(excelDateToJS(v)) n++;
+  }
+  return n;
+}
+
+function rowHasPlanningValues(row, dateCols){
+  return dateCols.some(dc => !isEmpty(row?.[dc.col]));
+}
+
+function isUnassignedSeparator(row, nameCol){
+  const label = norm($("tasLabel")?.value || "TAS");
+  const values = (row || []).map(v => norm(v)).filter(Boolean);
+  return values.includes(label);
+}
+
+function sameCode(a,b){ return String(a || "").trim() === String(b || "").trim(); }
+
+function findUncoveredAt(uncoveredServices, dateIndex, code){
+  return uncoveredServices.find(s => s.dateIndex === dateIndex && sameCode(s.code, code));
+}
+
+function getLinkedAssignmentGroup(service, uncoveredServices, ag, linkedPairs){
+  const code = String(service.code || "").trim();
+  const group = [{...service, role:"service principal"}];
+
+  for(const pair of linkedPairs){
+    if(code === pair.from){
+      const nextIndex = service.dateIndex + 1;
+      const nextDay = ag.days[nextIndex];
+      if(nextDay && nextDay.type === "work" && sameCode(nextDay.code, pair.to)) return {ok:true, group, note:`${pair.from} est déjà suivi de ${pair.to} chez cet agent.`};
+      const nextService = findUncoveredAt(uncoveredServices, nextIndex, pair.to);
+      if(!nextService) return {ok:false, group, reason:`${pair.from} doit obligatoirement être suivi de ${pair.to} le lendemain pour ${getProgramSiteLabel()}. La journée ${pair.to} n’est pas disponible en non attribué.`};
+      group.push({...nextService, role:`journée liée ${pair.to}`});
+      return {ok:true, group, note:`Affectation groupée ${pair.from}→${pair.to}.`};
+    }
+
+    if(code === pair.to){
+      const prevIndex = service.dateIndex - 1;
+      const prevDay = ag.days[prevIndex];
+      if(prevDay && prevDay.type === "work" && sameCode(prevDay.code, pair.from)) return {ok:true, group, note:`${pair.to} est déjà précédé de ${pair.from} chez cet agent.`};
+      const prevService = findUncoveredAt(uncoveredServices, prevIndex, pair.from);
+      if(!prevService) return {ok:false, group, reason:`${pair.to} doit obligatoirement être précédé de ${pair.from} la veille pour ${getProgramSiteLabel()}. La journée ${pair.from} n’est pas disponible en non attribué.`};
+      group.unshift({...prevService, role:`journée liée ${pair.from}`});
+      return {ok:true, group, note:`Affectation groupée ${pair.from}→${pair.to}.`};
+    }
+  }
+  return {ok:true, group, note:"Affectation simple."};
+}
+
+function groupKey(group){
+  return group.map(s => `${s.dateIndex}:${s.code}:${s.label}`).sort().join("|");
+}
+
+function buildSolutions(agents, uncoveredServices, dateCols, maxConsec, minRestAgent, linkedPairs){
+  const solutions = [];
+  const rejected = [];
+  const alreadySolvedGroups = new Set();
+
+  for(const service of uncoveredServices){
+    const pairAsSecond = linkedPairs.find(p => String(service.code || "").trim() === p.to);
+    if(pairAsSecond && findUncoveredAt(uncoveredServices, service.dateIndex - 1, pairAsSecond.from)){
+      continue;
+    }
+
+    for(const ag of agents){
+      const linkedCheck = getLinkedAssignmentGroup(service, uncoveredServices, ag, linkedPairs);
+      const group = linkedCheck.group || [service];
+      const key = `${ag.name}|${groupKey(group)}`;
+      if(alreadySolvedGroups.has(key)) continue;
+      alreadySolvedGroups.add(key);
+
+      const reasons = [];
+      if(!linkedCheck.ok) reasons.push(linkedCheck.reason);
+
+      const restBefore = ag.days.filter(d => d.type === "rest").length;
+      let simulated = ag.days.map(d => ({...d}));
+      let restsRemoved = 0;
+
+      for(const item of group){
+        const day = ag.days[item.dateIndex];
+        if(!day){
+          reasons.push(`Date absente du planning agent pour ${item.code || "la journée"}.`);
+          continue;
+        }
+        if(day.type === "work" && sameCode(day.code, item.code)){
+          continue;
+        }
+        if(day.type !== "rest"){
+          reasons.push(`L’agent n’est pas en repos le ${fmtDate(dateCols[item.dateIndex]?.date)} pour couvrir ${item.code || "la journée"}.`);
+          continue;
+        }
+        restsRemoved++;
+        simulated[item.dateIndex] = {...day, type:"work", code:item.code || "À couvrir", hours:0, simulated:true};
+      }
+
+      const restAfter = restBefore - restsRemoved;
+      if(restAfter < minRestAgent){
+        reasons.push(`Repos insuffisants après modification : ${restAfter} repos restants, minimum requis ${minRestAgent}.`);
+      }
+
+      const seqCheck = violatesConsecutiveRule(simulated, maxConsec);
+      if(!seqCheck.ok){
+        reasons.push(`La modification créerait ${seqCheck.len} jours consécutifs sans être suivis de deux repos.`);
+      }
+
+      if(reasons.length){
+        rejected.push({
+          date:group.map(s=>fmtDate(dateCols[s.dateIndex]?.date)).join(" + "),
+          agent:ag.name,
+          matricule:ag.matricule,
+          service:group.map(s=>s.code || "").join(" + "),
+          reasons:reasons.join(" "),
+          reposAvant:restBefore,
+          reposApres:restAfter,
+          sequenceMaxApres:longestWorkSequence(simulated)
+        });
+        continue;
+      }
+
+      const sequenceMax = longestWorkSequence(simulated);
+      const scoreValue = Math.max(0, 100 - (Math.max(0, sequenceMax - 3) * 12) + (restAfter * 3) - Math.max(0, restsRemoved - 1) * 5);
+      const risk = scoreValue >= 95 ? "Faible" : scoreValue >= 80 ? "Moyen" : "Élevé";
+      const codes = group.map(s=>s.code || "la journée").join(" + ");
+      const dates = group.map(s=>fmtDate(dateCols[s.dateIndex]?.date)).join(" + ");
+      solutions.push({
+        date:dates,
+        agent:ag.name,
+        matricule:ag.matricule,
+        reposAvant:restBefore,
+        reposApres:restAfter,
+        couvertureActuelle:Math.min(...group.map(s=>s.coverage || 0)),
+        couvertureApres:Math.min(...group.map(s=>(s.coverage || 0) + 1)),
+        sequenceMaxApres:sequenceMax,
+        score:scoreValue,
+        risk,
+        detail:`Affecter ${codes} à ${ag.name}. ${linkedCheck.note || ""} Ligne non attribuée : ${service.label || "sans libellé"}. Date(s) : ${dates}.`
+      });
+    }
+  }
+  return {solutions, rejected};
+}
+
+function buildQualityReport(ctx){
+  const warnings = [];
+  if(!ctx.sheetName) warnings.push({niveau:"Erreur", point:"Aucune feuille chargée", detail:"Charge un fichier Excel avant l’analyse."});
+  if(ctx.dateRow < 0 || !ctx.dateCols?.length) warnings.push({niveau:"Erreur", point:"Dates non détectées", detail:"Aucune ligne de dates exploitable n’a été trouvée."});
+  if((ctx.dateCols || []).length < 7) warnings.push({niveau:"Alerte", point:"Peu de dates détectées", detail:"Le planning semble contenir moins de 7 dates."});
+  if((ctx.agents || []).length === 0) warnings.push({niveau:"Erreur", point:"Aucun agent détecté", detail:"Vérifie la colonne contenant les noms d’agents."});
+  if((ctx.unassignedRows || []).length === 0) warnings.push({niveau:"Alerte", point:"Ligne TAS non détectée ou vide", detail:"Aucune ligne de non attribué n’a été trouvée sous TAS."});
+  if((ctx.uncoveredServices || []).length === 0) warnings.push({niveau:"Info", point:"Aucun service TAS détecté", detail:"Aucune journée non attribuée n’a été détectée sous TAS."});
+  return {
+    summary:[
+      ["Feuille analysée", ctx.sheetName || "Non chargée"],
+      ["Ligne de dates", ctx.dateRow >= 0 ? ctx.dateRow + 1 : "Non détectée"],
+      ["Dates détectées", (ctx.dateCols || []).length],
+      ["Agents détectés", (ctx.agents || []).length],
+      ["Lignes TAS exploitées", (ctx.unassignedRows || []).length],
+      ["Services TAS non couverts", (ctx.uncoveredServices || []).length],
+      ["Anomalies", (ctx.anomalies || []).length]
+    ],
+    warnings
+  };
+}
+
+function analyze(){
+  if(!rawRows.length) return null;
+  const restCodes = parseList("restCodes");
+  const absenceCodes = parseList("absenceCodes");
+  const maxConsec = +$("maxConsec").value || 5;
+  const minRestAgent = +$("minRestAgent").value || 8;
+  const linkedPairs = parseLinkedPairs();
+  const minCoverage = +$("minCoverage").value || 1;
+  const uncoveredMode = $("uncoveredMode").value;
+
+  const dateInfo = findDateRow(rawRows);
+  if(dateInfo.row < 0 || dateInfo.cols.length === 0) throw new Error("Impossible de détecter les colonnes de dates.");
+  const dateCols = dateInfo.cols;
+  const nameCol = detectNameColumn(rawRows, dateInfo.row, dateCols);
+
+  const agents = [];
+  const unassignedRows = [];
+  const usedRows = new Set();
+  let inUnassignedZone = false;
+
+  for(let r=dateInfo.row+1;r<rawRows.length;r++){
+    if(usedRows.has(r)) continue;
+    const row = rawRows[r] || [];
+
+    if(rowDateCount(row) >= 3){
+      inUnassignedZone = false;
+      continue;
+    }
+
+    if(isUnassignedSeparator(row, nameCol)){
+      inUnassignedZone = true;
+      continue;
+    }
+
+    if(inUnassignedZone){
+      if(rowHasPlanningValues(row, dateCols)){
+        const label = String(row[nameCol] ?? "").trim() || `Ligne ${r+1}`;
+        const days = dateCols.map(dc => {
+          const code = row[dc.col];
+          const type = classify(code, restCodes, absenceCodes);
+          return {date: dc.date, col: dc.col, code: isEmpty(code) ? "" : String(code).trim(), type, hours:0};
+        });
+        unassignedRows.push({label, row:r, days});
+      }
+      continue;
+    }
+
+    const name = String(row[nameCol] ?? "").trim();
+    if(!name || name.length < 2) continue;
+    if(["PLUS","TOTAL","TOTAUX"].includes(norm(name))) continue;
+
+    let filled = 0, workish = 0, rest = 0;
+    for(const dc of dateCols){
+      const cls = classify(row[dc.col], restCodes, absenceCodes);
+      if(cls !== "empty") filled++;
+      if(cls === "work") workish++;
+      if(cls === "rest") rest++;
+    }
+    if(filled < 3 && workish < 1) continue;
+
+    const next = rawRows[r+1] || [];
+    const hasDurations = dateCols.filter(dc => isDuration(next[dc.col])).length >= 1;
+    const days = dateCols.map(dc => {
+      const code = row[dc.col];
+      const type = classify(code, restCodes, absenceCodes);
+      const dur = hasDurations ? hours(next[dc.col]) : 0;
+      return {date: dc.date, col: dc.col, code: isEmpty(code) ? "" : String(code).trim(), type, hours: dur};
+    });
+
+    const matriculeCandidate = row[nameCol+1];
+    const matricule = (typeof matriculeCandidate === "number" || String(matriculeCandidate ?? "").match(/^\d{5,}$/)) ? String(matriculeCandidate ?? "") : "";
+
+    agents.push({name, matricule, row:r, days});
+    if(hasDurations) usedRows.add(r+1);
+  }
+
+  const anomalies = [];
+  const coverageByDate = dateCols.map((dc, i) => {
+    let work=0, rest=0, absence=0, empty=0, totalHours=0;
+    for(const ag of agents){
+      const d = ag.days[i];
+      if(d.type === "work"){ work++; totalHours += d.hours; }
+      else if(d.type === "rest") rest++;
+      else if(d.type === "absence") absence++;
+      else empty++;
+    }
+    return {date:dc.date, work, rest, absence, empty, totalHours};
+  });
+
+  const uncoveredServices = [];
+  for(const row of unassignedRows){
+    for(let i=0;i<row.days.length;i++){
+      const d = row.days[i];
+      if(d.type !== "work") continue;
+      const coverage = coverageByDate[i]?.work || 0;
+      const service = {
+        dateIndex:i,
+        date:fmtDate(d.date),
+        code:d.code,
+        label:row.label,
+        row:row.row,
+        coverage
+      };
+      uncoveredServices.push(service);
+      anomalies.push({
+        type:"Journée non couverte",
+        agent:"",
+        date:service.date,
+        detail:`Service ${d.code || "sans code"} non attribué sous la ligne TAS${row.label ? " – " + row.label : ""}.`
+      });
+    }
+  }
+
+  const agentStats = agents.map(ag => {
+    let rest=0, workDays=0, absence=0, empty=0, totalHours=0;
+    const ds = ag.days;
+    for(let i=0;i<ds.length;i++){
+      if(ds[i].type==="rest") rest++;
+      else if(ds[i].type==="work"){ workDays++; totalHours += ds[i].hours; }
+      else if(ds[i].type==="absence") absence++;
+      else empty++;
+    }
+
+    for(let j=0;j<ds.length;j++){
+      const code = String(ds[j].code || "").trim();
+      const nextCode = String(ds[j+1]?.code || "").trim();
+
+      const prevCode = String(ds[j-1]?.code || "").trim();
+      for(const pair of linkedPairs){
+        if(code === pair.from && nextCode !== pair.to){
+          anomalies.push({
+            type:`Enchaînement ${pair.from}/${pair.to} incorrect`,
+            agent:ag.name,
+            date:fmtDate(ds[j].date),
+            detail:`Programmation ${getProgramSiteLabel()} : ${pair.from} doit être suivi le lendemain par ${pair.to}. Code trouvé le lendemain : ${nextCode || "vide"}`
+          });
+        }
+        if(code === pair.to && prevCode !== pair.from){
+          anomalies.push({
+            type:`Enchaînement ${pair.from}/${pair.to} incomplet`,
+            agent:ag.name,
+            date:fmtDate(ds[j].date),
+            detail:`Programmation ${getProgramSiteLabel()} : ${pair.to} doit être précédé la veille par ${pair.from}. Code trouvé la veille : ${prevCode || "vide"}`
+          });
+        }
+      }
+    }
+
+    let i=0;
+    while(i<ds.length){
+      if(ds[i].type !== "work"){ i++; continue; }
+      let start=i;
+      while(i<ds.length && ds[i].type==="work") i++;
+      let len=i-start;
+      const followedByTwoR = ds[i]?.type === "rest" && ds[i+1]?.type === "rest";
+      if(len > maxConsec && !followedByTwoR){
+        anomalies.push({
+          type:`Plus de ${maxConsec} jours sans 2 repos`,
+          agent:ag.name,
+          date:`${fmtDate(ds[start].date)} → ${fmtDate(ds[i-1].date)}`,
+          detail:`${len} jours consécutifs, suivi par ${ds[i]?.code || "vide"} / ${ds[i+1]?.code || "vide"}`
+        });
+      }
+    }
+
+    return {
+      name:ag.name, matricule:ag.matricule, rest, workDays, work:workDays, absence, empty,
+      totalHours, avgHours: workDays ? totalHours/workDays : 0,
+      maxSeq:longestWorkSequence(ds)
+    };
+  });
+
+  const codeCounts = {};
+  for(const ag of agents){
+    for(const d of ag.days){
+      const key = d.code || "(vide)";
+      codeCounts[key] = (codeCounts[key] || 0) + 1;
+    }
+  }
+
+  const optimization = buildSolutions(agents, uncoveredServices, dateCols, maxConsec, minRestAgent, linkedPairs);
+  const solutions = optimization.solutions
+    .sort((a,b)=> (b.score || 0) - (a.score || 0) || b.reposApres - a.reposApres);
+  const rejected = optimization.rejected || [];
+
+  const quality = buildQualityReport({
+    agents, unassignedRows, uncoveredServices, coverageByDate, dateCols, dateRow:dateInfo.row,
+    nameCol, sheetName:currentSheetName, anomalies
+  });
+
+  return {agents, agentStats, anomalies, solutions, rejected, quality, unassignedRows, uncoveredServices, coverageByDate, codeCounts, dateCols, dateRow:dateInfo.row, nameCol};
+}
+
+
+function workloadLevel(score){
+  // Lecture adoucie : 140 h ramenées sur 28 jours = charge normale.
+  if(score >= 90) return {label:"Risque élevé", cls:"heatCritical", heat:"workloadHeat4"};
+  if(score >= 80) return {label:"Important", cls:"heatHigh", heat:"workloadHeat3"};
+  if(score >= 70) return {label:"Vigilance", cls:"heatHigh", heat:"workloadHeat3"};
+  if(score >= 55) return {label:"Normal", cls:"heatMedium", heat:"workloadHeat2"};
+  if(score >= 40) return {label:"Maîtrisé", cls:"heatMedium", heat:"workloadHeat2"};
+  if(score >= 25) return {label:"Faible", cls:"heatLow", heat:"workloadHeat1"};
+  return {label:"Très faible", cls:"heatLow", heat:"workloadHeat1"};
+}
+
+function stressLevel(score){
+  if(score >= 88) return {label:"Fort", cls:"heatCritical", heat:"workloadHeat4"};
+  if(score >= 76) return {label:"Élevé", cls:"heatHigh", heat:"workloadHeat3"};
+  if(score >= 58) return {label:"Vigilance", cls:"heatHigh", heat:"workloadHeat3"};
+  if(score >= 38) return {label:"Modéré", cls:"heatMedium", heat:"workloadHeat2"};
+  return {label:"Faible", cls:"heatLow", heat:"workloadHeat1"};
+}
+
+function scoreHours28(projectedHours){
+  if(projectedHours <= 120) return 18;
+  if(projectedHours <= 130) return 28;
+  if(projectedHours < 140) return 38 + ((projectedHours - 130) * 1.4); // 130→38, 139→50,6
+  if(projectedHours <= 145) return 55 + ((projectedHours - 140) * 2.0); // 140→55, 145→65
+  if(projectedHours <= 150) return 65 + ((projectedHours - 145) * 2.0); // 150→75
+  if(projectedHours <= 155) return 75 + ((projectedHours - 150) * 2.0); // 155→85
+  if(projectedHours <= 160) return 85 + ((projectedHours - 155) * 1.8); // 160→94
+  return 96;
+}
+
+function scoreRest28(restDays, totalDays){
+  const projectedRest = totalDays ? restDays / totalDays * 28 : restDays;
+  if(projectedRest >= 12) return 18;
+  if(projectedRest >= 10) return 28;
+  if(projectedRest >= 8) return 45;
+  if(projectedRest >= 7) return 60;
+  if(projectedRest >= 6) return 75;
+  if(projectedRest >= 5) return 88;
+  return 100;
+}
+
+function scoreSequence(maxSeq){
+  if(maxSeq <= 4) return 22;
+  if(maxSeq === 5) return 40;
+  if(maxSeq === 6) return 55;
+  if(maxSeq === 7) return 70;
+  if(maxSeq === 8) return 85;
+  return 100;
+}
+
+function scoreAverageDay(avgHours){
+  if(avgHours <= 7) return 18;
+  if(avgHours <= 8) return 32;
+  if(avgHours <= 8.5) return 45;
+  if(avgHours <= 9) return 60;
+  if(avgHours <= 9.5) return 75;
+  return 90;
+}
+
+function workloadMetricsFor(agent, stats){
+  const days = agent.days || [];
+  const totalDays = days.length || 1;
+  const workDays = days.filter(d=>d.type === "work").length;
+  const restDays = days.filter(d=>d.type === "rest").length;
+  const absenceDays = days.filter(d=>d.type === "absence").length;
+  const emptyDays = days.filter(d=>d.type === "empty").length;
+  const totalHours = stats?.totalHours ?? days.reduce((sum,d)=>sum+(d.hours||0),0);
+  const projectedHours28 = totalDays ? (totalHours / totalDays) * 28 : totalHours;
+  const projectedRest28 = totalDays ? (restDays / totalDays) * 28 : restDays;
+  const avgHours = workDays ? totalHours / workDays : 0;
+  const maxSeq = longestWorkSequence(days);
+  const dispoDays = days.filter(d=>norm(d.code)==="DISPO").length;
+  const linkedDays = days.filter(d=>["300","301","400","401","600","601"].includes(norm(d.code))).length;
+  let oneRestBreaks = 0;
+  for(let i=1;i<days.length-1;i++){
+    if(days[i].type === "rest" && days[i-1].type === "work" && days[i+1].type === "work") oneRestBreaks++;
+  }
+
+  const minRest = +($("minRestAgent")?.value || 8);
+  const expectedMinRest = totalDays ? (minRest / 28) * totalDays : minRest;
+  const restDeficit = Math.max(0, Math.ceil(expectedMinRest - restDays));
+
+  const hourScore = scoreHours28(projectedHours28);
+  const restScore = scoreRest28(restDays, totalDays);
+  const seqScore = scoreSequence(maxSeq);
+  const avgScore = scoreAverageDay(avgHours);
+  const linkedScore = Math.min(100, linkedDays * 5 + dispoDays * 2);
+
+  // Pondération : heures 45 %, repos 25 %, séquence 15 %, moyenne journalière 10 %, journées sensibles 5 %.
+  const fatigueScore = Math.round(Math.min(100, Math.max(0,
+    hourScore*0.45 + restScore*0.25 + seqScore*0.15 + avgScore*0.10 + linkedScore*0.05
+  )));
+
+  const stressScore = Math.round(Math.min(100, Math.max(0,
+    restScore*0.38 + seqScore*0.30 + avgScore*0.12 + Math.max(0, hourScore-45)*0.12 + oneRestBreaks*4 + dispoDays*1.5
+  )));
+
+  const globalScore = Math.round(Math.min(100, Math.max(0, fatigueScore*0.62 + stressScore*0.38)));
+  const global = workloadLevel(globalScore);
+  const stress = stressLevel(stressScore);
+  const fatigue = workloadLevel(fatigueScore);
+  const restLevel = workloadLevel(restScore);
+
+  let advice = `Base 28 jours : ${projectedHours28.toFixed(1)} h / 140 h, ${projectedRest28.toFixed(1)} repos estimés.`;
+  if(projectedHours28 < 140 && projectedRest28 >= 8 && maxSeq <= 5){
+    advice += " Situation plutôt faible ou maîtrisée.";
+  }else if(projectedHours28 >= 140 && projectedHours28 <= 145 && projectedRest28 >= 8){
+    advice += " Charge normale, à suivre sans alerte forte.";
+  }else if(globalScore >= 90){
+    advice += " Priorité de contrôle : charge ou repos réellement tendus.";
+  }else if(globalScore >= 70){
+    advice += " Vigilance : éviter d’ajouter une journée sans vérifier les repos.";
+  }else{
+    advice += " Situation cohérente avec les repos et la charge horaire.";
+  }
+
+  return {agent:agent.name, matricule:agent.matricule, workDays, restDays, absenceDays, emptyDays, totalHours, projectedHours28, projectedRest28, avgHours, maxSeq, dispoDays, linkedDays, oneRestBreaks, restDeficit, fatigueScore, stressScore, globalScore, global, stress, restLevel, fatigue, advice};
+}
+
+function renderWorkload(r){
+  if(!$("workloadTable")) return;
+  const q = norm($("workloadSearch")?.value || "");
+  const sort = $("workloadSort")?.value || "risk";
+  let rows = r.agents.map(ag=>{
+    const stats = (r.agentStats || []).find(s=>s.name === ag.name) || {};
+    return workloadMetricsFor(ag, stats);
+  }).filter(m=>!q || norm(m.agent).includes(q) || norm(m.matricule).includes(q));
+  rows.sort((a,b)=>{
+    if(sort === "hours") return b.totalHours - a.totalHours;
+    if(sort === "rest") return a.restDays - b.restDays;
+    if(sort === "stress") return b.stressScore - a.stressScore;
+    return b.globalScore - a.globalScore;
+  });
+  const bar = v => `<span class="workloadBar"><span class="workloadBarFill" style="width:${Math.max(0,Math.min(100,v))}%"></span></span> <span class="workloadScore">${v}</span>`;
+  table("workloadTable",
+    ["Agent","Charge globale","Fatigue","Stress","Jours travaillés","Repos","Peu / pas de repos","Heures réelles","Base 28 jours","Moyenne / jour","Séquence max","DISPO","Lecture"],
+    rows.map(m=>[
+      `<span class="workloadAgentCell">${m.agent}</span>${m.matricule?`<span class="workloadTableMini">${m.matricule}</span>`:""}`,
+      `<span class="heatBadge ${m.global.cls}">${m.global.label}</span><br>${bar(m.globalScore)}`,
+      `<span class="heatBadge ${m.fatigue.cls}">${m.fatigue.label}</span><br>${bar(m.fatigueScore)}`,
+      `<span class="heatBadge ${m.stress.cls}">${m.stress.label}</span><br>${bar(m.stressScore)}`,
+      `<span class="${m.workDays/Math.max(1,(m.workDays+m.restDays+m.absenceDays))>.78?'heatBadge heatHigh':'heatBadge heatLow'}">${m.workDays}</span>`,
+      `<span class="heatBadge ${m.restLevel.cls}">${m.restDays}</span>`,
+      m.restDeficit>0 ? `<span class="heatBadge heatCritical">-${m.restDeficit}</span>` : `<span class="heatBadge heatLow">OK</span>`,
+      `<span class="heatBadge ${m.projectedHours28>155?'heatCritical':m.projectedHours28>145?'heatHigh':m.projectedHours28>=140?'heatMedium':'heatLow'}">${m.totalHours.toFixed(1)} h</span>`,
+      `<span class="heatBadge ${m.projectedHours28>155?'heatCritical':m.projectedHours28>145?'heatHigh':m.projectedHours28>=140?'heatMedium':'heatLow'}">${m.projectedHours28.toFixed(1)} h / 140</span>`,
+      `${m.avgHours.toFixed(2)} h`,
+      `<span class="heatBadge ${m.maxSeq>7?'heatCritical':m.maxSeq>=6?'heatHigh':m.maxSeq>=5?'heatMedium':'heatLow'}">${m.maxSeq}</span>`,
+      m.dispoDays,
+      `<span class="workloadHint">${m.advice}</span>`
+    ])
+  );
+}
+
+function buildWorkloadExportRows(){
+  if(!lastResult) return [];
+  const q = norm($("workloadSearch")?.value || "");
+  const sort = $("workloadSort")?.value || "risk";
+  let rows = lastResult.agents.map(ag=>{
+    const stats = (lastResult.agentStats || []).find(s=>s.name === ag.name) || {};
+    const m = workloadMetricsFor(ag, stats);
+    return {Agent:m.agent, Matricule:m.matricule, "Score charge":m.globalScore, "Niveau charge":m.global.label, "Score fatigue":m.fatigueScore, "Niveau fatigue":m.fatigue.label, "Score stress":m.stressScore, "Niveau stress":m.stress.label, "Jours travaillés":m.workDays, Repos:m.restDays, "Déficit repos":m.restDeficit, "Heures totales":Number(m.totalHours.toFixed(2)), "Heures base 28 jours":Number(m.projectedHours28.toFixed(2)), "Repos base 28 jours":Number(m.projectedRest28.toFixed(2)), "Moyenne par jour":Number(m.avgHours.toFixed(2)), "Séquence max":m.maxSeq, DISPO:m.dispoDays, Lecture:m.advice};
+  }).filter(m=>!q || norm(m.Agent).includes(q) || norm(m.Matricule).includes(q));
+  rows.sort((a,b)=>{
+    if(sort === "hours") return b["Heures totales"] - a["Heures totales"];
+    if(sort === "rest") return a.Repos - b.Repos;
+    if(sort === "stress") return b["Score stress"] - a["Score stress"];
+    return b["Score charge"] - a["Score charge"];
+  });
+  return rows;
+}
+
+function exportWorkloadExcel(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const rows = buildWorkloadExportRows();
+  if(rows.length === 0){ rows.push({Agent:"Aucun agent dans le filtre"}); }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{wch:32},{wch:16},{wch:14},{wch:16},{wch:14},{wch:16},{wch:14},{wch:16},{wch:16},{wch:10},{wch:14},{wch:15},{wch:16},{wch:13},{wch:10},{wch:70}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Charge de travail");
+  XLSX.writeFile(wb, `charge_de_travail_${safeFilePart(currentSheetName)}.xlsx`);
+}
+
+function exportWorkloadPDF(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const jsPDF = window.jspdf?.jsPDF;
+  if(!jsPDF){ alert("Le module PDF n’est pas chargé. Vérifie ta connexion internet ou utilise la version avec librairies intégrées."); return; }
+  const rows = buildWorkloadExportRows();
+  const body = rows.length ? rows.map(m => [
+    m.Agent, m.Matricule, m["Niveau charge"], m["Score charge"], m["Niveau fatigue"], m["Score fatigue"], m["Niveau stress"], m["Score stress"], m["Jours travaillés"], m.Repos, m["Déficit repos"], m["Heures totales"], m["Heures base 28 jours"], m["Repos base 28 jours"], m["Moyenne par jour"], m["Séquence max"], m.DISPO, m.Lecture
+  ]) : [["Aucun agent dans le filtre", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]];
+  const doc = new jsPDF({orientation:"landscape", unit:"mm", format:"a4"});
+  doc.setFontSize(14);
+  doc.text(`Charge de travail - ${currentSheetName || "feuille analysée"}`, 14, 12);
+  doc.setFontSize(9);
+  doc.text(`Export généré depuis l’analyse HTML - ${body.length} agent(s)`, 14, 18);
+  doc.autoTable({
+    head:[["Agent","Matricule","Charge","Score","Fatigue","Score","Stress","Score","Trav.","Repos","Déficit","Heures","Base 28j","Repos 28j","Moy./j","Séq.","DISPO","Lecture"]],
+    body,
+    startY:24,
+    theme:"grid",
+    styles:{fontSize:6.8, cellPadding:1.4, overflow:"linebreak", valign:"middle"},
+    headStyles:{fillColor:[19,41,75], textColor:[255,255,255]},
+    columnStyles:{0:{cellWidth:34,fontStyle:"bold"},1:{cellWidth:16},2:{cellWidth:18},3:{cellWidth:12,halign:"center"},4:{cellWidth:18},5:{cellWidth:12,halign:"center"},6:{cellWidth:18},7:{cellWidth:12,halign:"center"},8:{cellWidth:12,halign:"center"},9:{cellWidth:12,halign:"center"},10:{cellWidth:13,halign:"center"},11:{cellWidth:14,halign:"right"},12:{cellWidth:14,halign:"right"},13:{cellWidth:11,halign:"center"},14:{cellWidth:11,halign:"center"},15:{cellWidth:62}},
+    margin:{left:7,right:7}
+  });
+  doc.save(`charge_de_travail_${safeFilePart(currentSheetName)}.pdf`);
+}
+
+function renderAll(){
+  try{
+    const result = analyze();
+    lastResult = result;
+    renderKpis(result);
+    renderAgents(result);
+    renderWorkload(result);
+    renderQuality(result);
+    renderAnomalies(result);
+    renderSolutions(result);
+    renderRejected(result);
+    renderPlanning(result);
+    renderCalendar(result);
+    renderCharts(result);
+    $("status").textContent = `Analyse OK (${getProgramSite() === "lyon" ? "Lyon : enchaînements 300→301 et 600→601 obligatoires" : "Paris : 400→401 obligatoires"}) : feuille "${currentSheetName}", ${result.agents.length} agents, ${result.dateCols.length} dates détectées, ${result.uncoveredServices.length} service(s) non attribué(s). Ligne dates : ${result.dateRow+1}.`;
+  }catch(e){
+    $("status").textContent = "Erreur : " + e.message;
+  }
+}
+
+function renderKpis(r){
+  const totalHours = r.agentStats.reduce((a,b)=>a+b.totalHours,0);
+  const uncovered = r.anomalies.filter(x=>x.type==="Journée non couverte").length;
+  const tooLong = r.anomalies.filter(x=>x.type.includes("Plus de")).length;
+  const avgRest = r.agentStats.length ? r.agentStats.reduce((a,b)=>a+b.rest,0)/r.agentStats.length : 0;
+  const data = [
+    ["Agents détectés", r.agents.length],
+    ["Heures totales", totalHours.toFixed(1)+" h"],
+    ["Repos moyen / agent", avgRest.toFixed(1)],
+    ["Journées non couvertes", uncovered],
+    ["Solutions possibles", r.solutions.length],
+    ["Anomalies totales", r.anomalies.length]
+  ];
+  $("kpis").innerHTML = data.map(([l,v])=>`<div class="kpi"><div class="label">${l}</div><div class="value">${v}</div></div>`).join("");
+}
+
+function renderAgents(r){
+  const q = norm($("agentSearch").value);
+  const rows = r.agentStats
+    .filter(a => !q || norm(a.name).includes(q) || norm(a.matricule).includes(q))
+    .sort((a,b)=>b.totalHours-a.totalHours);
+  table("agentsTable",
+    ["Agent","Matricule","Jours travaillés","Repos","Absences","Cases vides","Temps travail","Moyenne / jour"],
+    rows.map(a=>[a.name,a.matricule,a.workDays,a.rest,a.absence,a.empty,a.totalHours.toFixed(2)+" h",a.avgHours.toFixed(2)+" h"])
+  );
+}
+
+function renderAnomalies(r){
+  table("anomaliesTable",
+    ["Type","Agent","Date / période","Détail"],
+    r.anomalies.map(a=>[badge(a.type),a.agent,a.date,a.detail])
+  );
+}
+
+
+function tr(key){
+  const dict = {
+    fr:{score:"Score",risk:"Risque",date:"Date",service:"Service",agentRejected:"Agent écarté",agentProposed:"Agent proposé",matricule:"Matricule",restBefore:"Repos avant",restAfter:"Repos après",coverageNow:"Couverture actuelle",coverageAfter:"Couverture après",seqMax:"Séquence max après",simulation:"Simulation",reason:"Raison",uncoveredDate:"Date non couverte"},
+    es:{score:"Puntuación",risk:"Riesgo",date:"Fecha",service:"Servicio",agentRejected:"Agente descartado",agentProposed:"Agente propuesto",matricule:"Matrícula",restBefore:"Descansos antes",restAfter:"Descansos después",coverageNow:"Cobertura actual",coverageAfter:"Cobertura después",seqMax:"Secuencia máx.",simulation:"Simulación",reason:"Motivo",uncoveredDate:"Fecha no cubierta"},
+    en:{score:"Score",risk:"Risk",date:"Date",service:"Duty",agentRejected:"Rejected agent",agentProposed:"Suggested agent",matricule:"ID",restBefore:"Rest before",restAfter:"Rest after",coverageNow:"Current coverage",coverageAfter:"Coverage after",seqMax:"Max sequence after",simulation:"Simulation",reason:"Reason",uncoveredDate:"Uncovered date"}
+  };
+  return (dict[currentLang] || dict.fr)[key] || key;
+}
+
+function renderSolutions(r){
+  const rows = r.solutions || [];
+  table("solutionsTable",
+    [tr("score"),tr("risk"),tr("uncoveredDate"),tr("agentProposed"),tr("matricule"),tr("restBefore"),tr("restAfter"),tr("coverageNow"),tr("coverageAfter"),tr("seqMax"),tr("simulation")],
+    rows.length ? rows.map(s=>[
+      `<span class="score ${s.risk === "Faible" ? "low" : s.risk === "Moyen" ? "mid" : "high"}">${Math.round(s.score || 0)}</span>`,
+      s.risk || "",
+      s.date,
+      s.agent,
+      s.matricule,
+      s.reposAvant,
+      s.reposApres,
+      s.couvertureActuelle,
+      s.couvertureApres,
+      s.sequenceMaxApres,
+      `<span class="badge solution">${s.detail}</span>`
+    ]) : [["Aucune solution automatique trouvée","","","","","","","","","",""]]
+  );
+}
+
+function renderRejected(r){
+  const rows = r.rejected || [];
+  table("rejectedTable",
+    [tr("uncoveredDate"),tr("service"),tr("agentRejected"),tr("matricule"),tr("reason"),tr("restBefore"),tr("restAfter"),tr("seqMax")],
+    rows.length ? rows.map(x=>[
+      x.date || "",
+      x.service || "",
+      x.agent || "",
+      x.matricule || "",
+      `<span class="badge warn">${x.reasons || "Agent non retenu par l’optimisation."}</span>`,
+      x.reposAvant ?? "",
+      x.reposApres ?? "",
+      x.sequenceMaxApres ?? ""
+    ]) : [["Aucun agent écarté à afficher","","","","Aucune journée TAS non couverte ou aucun refus détecté avec les paramètres actuels.","","",""]]
+  );
+}
+
+
+function renderQuality(r){
+  const q = r.quality || {summary:[], warnings:[]};
+  $("qualityGrid").innerHTML = q.summary.map(([label,value])=>`
+    <div class="qualityItem">
+      <div class="qtitle">${label}</div>
+      <div class="qvalue">${value}</div>
+    </div>
+  `).join("");
+  table("qualityTable", ["Niveau","Point contrôlé","Détail"],
+    q.warnings.length ? q.warnings.map(w=>[badge(w.niveau), w.point, w.detail]) : [["OK","Structure générale","Aucun point bloquant détecté."]]
+  );
+}
+
+function renderCalendar(r){
+  const uncoveredByDate = new Map((r.uncoveredServices || []).map(s=>[s.date,true]));
+  const minCoverage = +$("minCoverage").value || 1;
+  $("calendarGrid").innerHTML = r.coverageByDate.map(c=>{
+    const d = fmtDate(c.date);
+    const hasProblem = uncoveredByDate.has(d);
+    const weak = !hasProblem && c.work < minCoverage;
+    const cls = hasProblem ? "problem" : weak ? "warnDay" : "okday";
+    return `<div class="calendarDay ${cls}">
+      <div class="date">${d}</div>
+      <div>Agents en service : ${c.work}</div>
+      <div>Repos : ${c.rest}</div>
+      <div>Absences : ${c.absence}</div>
+      <div>${hasProblem ? "Service TAS non attribué" : weak ? "Couverture faible" : "Couvert"}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderPlanning(r){
+  const q = norm($("agentSearch").value);
+  const head = ["Agent"].concat(r.dateCols.map(d=>fmtDate(d.date)));
+  const rows = r.agents
+    .filter(a => !q || norm(a.name).includes(q) || norm(a.matricule).includes(q))
+    .map(a => [a.name].concat(a.days.map(d => cellCode(d))));
+  table("planningTable", head, rows);
+}
+
+function badge(text){
+  const cls = text.includes("non couverte") ? "danger" : text.includes("Plus") ? "warn" : "info";
+  return `<span class="badge ${cls}">${text}</span>`;
+}
+
+function cellCode(d){
+  const cls = d.type==="rest" ? "codeR" : d.type==="absence" ? "codeCP" : d.type==="work" ? "codeWork" : "codeEmpty";
+  const h = d.hours ? `<br><span class="small">${d.hours.toFixed(2)} h</span>` : "";
+  return `<span class="${cls}" style="display:block;margin:-8px;padding:8px">${d.code || ""}${h}</span>`;
+}
+
+function table(id, headers, rows){
+  const esc = x => String(x ?? "");
+  $(id).innerHTML = `<thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>`+
+    rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")+
+    `</tbody>`;
+}
+
+function renderCharts(r){
+  charts.forEach(c=>c.destroy());
+  charts = [];
+
+  const topHours = [...r.agentStats].sort((a,b)=>b.totalHours-a.totalHours).slice(0,12);
+  charts.push(new Chart($("chartWork"), {
+    type:"bar",
+    data:{labels:topHours.map(a=>a.name), datasets:[{label:"Heures", data:topHours.map(a=>+a.totalHours.toFixed(2))}]},
+    options:{responsive:true,plugins:{title:{display:true,text:"Temps de travail par agent"}}}
+  }));
+
+  const topRest = [...r.agentStats].sort((a,b)=>b.rest-a.rest).slice(0,12);
+  charts.push(new Chart($("chartRest"), {
+    type:"bar",
+    data:{labels:topRest.map(a=>a.name), datasets:[{label:"Repos", data:topRest.map(a=>a.rest)}]},
+    options:{responsive:true,plugins:{title:{display:true,text:"Nombre de repos par agent"}}}
+  }));
+
+  charts.push(new Chart($("chartCoverage"), {
+    type:"line",
+    data:{labels:r.coverageByDate.map(c=>fmtDate(c.date)), datasets:[{label:"Agents en service", data:r.coverageByDate.map(c=>c.work)}]},
+    options:{responsive:true,plugins:{title:{display:true,text:"Couverture par date"}}}
+  }));
+
+  const codeEntries = Object.entries(r.codeCounts).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  charts.push(new Chart($("chartCodes"), {
+    type:"doughnut",
+    data:{labels:codeEntries.map(x=>x[0]), datasets:[{label:"Occurrences", data:codeEntries.map(x=>x[1])}]},
+    options:{responsive:true,plugins:{title:{display:true,text:"Codes les plus fréquents"}}}
+  }));
+}
+
+function cleanText(v){
+  const div = document.createElement("div");
+  div.innerHTML = String(v ?? "");
+  return div.textContent || div.innerText || "";
+}
+
+function safeFilePart(s){
+  return String(s || "planning").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9_-]+/g, "_").replace(/^_+|_+$/g, "");
+}
+
+
+function buildAnomaliesExportRows(){
+  if(!lastResult) return [];
+  return lastResult.anomalies.map(a => ({
+    "Type": cleanText(a.type),
+    "Agent": a.agent || "",
+    "Date / période": a.date || "",
+    "Détail": a.detail || ""
+  }));
+}
+
+function buildSolutionsExportRows(){
+  if(!lastResult) return [];
+  return (lastResult.solutions || []).map(s => ({
+    "Score": Math.round(s.score || 0),
+    "Risque": s.risk || "",
+    "Date non couverte": s.date || "",
+    "Agent proposé": s.agent || "",
+    "Matricule": s.matricule || "",
+    "Repos avant": s.reposAvant ?? "",
+    "Repos après": s.reposApres ?? "",
+    "Couverture actuelle": s.couvertureActuelle ?? "",
+    "Couverture après": s.couvertureApres ?? "",
+    "Séquence max après": s.sequenceMaxApres ?? "",
+    "Proposition": cleanText(s.detail || "")
+  }));
+}
+
+function buildRejectedExportRows(){
+  if(!lastResult) return [];
+  return (lastResult.rejected || []).map(x => ({
+    "Date non couverte": x.date || "",
+    "Service": x.service || "",
+    "Agent écarté": x.agent || "",
+    "Matricule": x.matricule || "",
+    "Raison": cleanText(x.reasons || ""),
+    "Repos avant": x.reposAvant ?? "",
+    "Repos après": x.reposApres ?? "",
+    "Séquence max après": x.sequenceMaxApres ?? ""
+  }));
+}
+
+
+function getRejectedRowsWithFallback(){
+  const rows = buildRejectedExportRows();
+  if(rows.length) return rows;
+  return [{
+    "Date non couverte":"Aucun agent écarté à afficher",
+    "Service":"",
+    "Agent écarté":"",
+    "Matricule":"",
+    "Raison":"Aucune journée TAS non couverte ou aucun refus détecté avec les paramètres actuels.",
+    "Repos avant":"",
+    "Repos après":"",
+    "Séquence max après":""
+  }];
+}
+
+function exportRejectedExcel(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const rows = getRejectedRowsWithFallback();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!autofilter"] = {ref: ws["!ref"]};
+  ws["!cols"] = [{wch:20},{wch:18},{wch:34},{wch:16},{wch:100},{wch:12},{wch:12},{wch:18}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Agents écartés");
+  XLSX.writeFile(wb, `agents_ecartes_${safeFilePart(currentSheetName)}.xlsx`);
+}
+
+function exportRejectedPDF(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const jsPDF = window.jspdf?.jsPDF;
+  if(!jsPDF){ alert("Le module PDF n’est pas chargé. Vérifie ta connexion internet ou utilise la version avec librairies intégrées."); return; }
+  const rows = getRejectedRowsWithFallback();
+  const body = rows.map(x => [
+    x["Date non couverte"] || "",
+    x["Service"] || "",
+    x["Agent écarté"] || "",
+    x["Matricule"] || "",
+    x["Raison"] || "",
+    x["Repos avant"] ?? "",
+    x["Repos après"] ?? "",
+    x["Séquence max après"] ?? ""
+  ]);
+  const doc = new jsPDF({orientation:"landscape", unit:"mm", format:"a4"});
+  doc.setFontSize(14);
+  doc.text(`Agents écartés par l’optimisation - ${currentSheetName || "feuille analysée"}`, 14, 12);
+  doc.setFontSize(9);
+  doc.text(`Export généré depuis l’analyse HTML - ${body.length} ligne(s)`, 14, 18);
+  doc.autoTable({
+    head:[["Date","Service","Agent écarté","Matricule","Raison","Repos av.","Repos ap.","Séq. max"]],
+    body,
+    startY:24,
+    theme:"grid",
+    styles:{fontSize:7.2, cellPadding:1.6, overflow:"linebreak", valign:"middle"},
+    headStyles:{fillColor:[201,58,58], textColor:[255,255,255]},
+    columnStyles:{
+      0:{cellWidth:24},
+      1:{cellWidth:22},
+      2:{cellWidth:45, fontStyle:"bold"},
+      3:{cellWidth:24},
+      4:{cellWidth:128},
+      5:{cellWidth:16, halign:"center"},
+      6:{cellWidth:16, halign:"center"},
+      7:{cellWidth:16, halign:"center"}
+    },
+    margin:{left:8,right:8}
+  });
+  doc.save(`agents_ecartes_${safeFilePart(currentSheetName)}.pdf`);
+}
+
+function exportAnomaliesExcel(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const rows = buildAnomaliesExportRows();
+  if(rows.length === 0){
+    rows.push({"Type":"Aucune anomalie détectée", "Agent":"", "Date / période":"", "Détail":""});
+  }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!cols"] = [{wch:34},{wch:28},{wch:18},{wch:75}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Anomalies");
+  XLSX.writeFile(wb, `anomalies_${safeFilePart(currentSheetName)}.xlsx`);
+}
+
+
+
+function exportAnomaliesPDF(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const jsPDF = window.jspdf?.jsPDF;
+  if(!jsPDF){ alert("Le module PDF n’est pas chargé. Vérifie ta connexion internet ou utilise la version avec librairies intégrées."); return; }
+  const rows = buildAnomaliesExportRows();
+  const body = rows.length ? rows.map(a => [
+    a["Type"],
+    a["Agent"],
+    a["Date / période"],
+    a["Détail"]
+  ]) : [["Aucune anomalie détectée", "", "", ""]];
+  const doc = new jsPDF({orientation:"landscape", unit:"mm", format:"a4"});
+  doc.setFontSize(14);
+  doc.text(`Anomalies - ${currentSheetName || "feuille analysée"}`, 14, 12);
+  doc.setFontSize(9);
+  doc.text(`Export généré depuis l’analyse HTML - ${body.length} ligne(s)`, 14, 18);
+  doc.autoTable({
+    head:[["Type","Agent","Date / période","Détail"]],
+    body,
+    startY:24,
+    theme:"grid",
+    styles:{fontSize:8, cellPadding:2, overflow:"linebreak", valign:"middle"},
+    headStyles:{fillColor:[201,58,58], textColor:[255,255,255]},
+    columnStyles:{0:{cellWidth:48, fontStyle:"bold"}, 1:{cellWidth:42}, 2:{cellWidth:28}, 3:{cellWidth:170}},
+    margin:{left:10,right:10}
+  });
+  doc.save(`anomalies_${safeFilePart(currentSheetName)}.pdf`);
+}
+
+function exportSolutionsExcel(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const rows = buildSolutionsExportRows();
+  if(rows.length === 0){
+    rows.push({
+      "Score":"",
+      "Risque":"",
+      "Date non couverte":"Aucune solution automatique trouvée",
+      "Agent proposé":"",
+      "Matricule":"",
+      "Repos avant":"",
+      "Repos après":"",
+      "Couverture actuelle":"",
+      "Couverture après":"",
+      "Séquence max après":"",
+      "Proposition":""
+    });
+  }
+  const rejectedRows = buildRejectedExportRows();
+  if(rejectedRows.length === 0){
+    rejectedRows.push({
+      "Date non couverte":"Aucun agent écarté à afficher",
+      "Service":"",
+      "Agent écarté":"",
+      "Matricule":"",
+      "Raison":"Aucune journée TAS non couverte ou aucun refus détecté avec les paramètres actuels.",
+      "Repos avant":"",
+      "Repos après":"",
+      "Séquence max après":""
+    });
+  }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws["!autofilter"] = {ref: ws["!ref"]};
+  ws["!cols"] = [{wch:10},{wch:12},{wch:18},{wch:34},{wch:16},{wch:12},{wch:12},{wch:18},{wch:16},{wch:18},{wch:80}];
+  const wsRejected = XLSX.utils.json_to_sheet(rejectedRows);
+  wsRejected["!autofilter"] = {ref: wsRejected["!ref"]};
+  wsRejected["!cols"] = [{wch:20},{wch:18},{wch:34},{wch:16},{wch:100},{wch:12},{wch:12},{wch:18}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Solutions");
+  XLSX.utils.book_append_sheet(wb, wsRejected, "Agents écartés");
+  XLSX.writeFile(wb, `solutions_${safeFilePart(currentSheetName)}.xlsx`);
+}
+
+function exportSolutionsPDF(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const jsPDF = window.jspdf?.jsPDF;
+  if(!jsPDF){ alert("Le module PDF n’est pas chargé. Vérifie ta connexion internet ou utilise la version avec librairies intégrées."); return; }
+  const rows = buildSolutionsExportRows();
+  const body = rows.length ? rows.map(s => [
+    s["Score"],
+    s["Risque"],
+    s["Date non couverte"],
+    s["Agent proposé"],
+    s["Matricule"],
+    s["Repos avant"],
+    s["Repos après"],
+    s["Couverture actuelle"],
+    s["Couverture après"],
+    s["Séquence max après"],
+    s["Proposition"]
+  ]) : [["Aucune solution automatique trouvée", "", "", "", "", "", "", "", "", ""]];
+  const doc = new jsPDF({orientation:"landscape", unit:"mm", format:"a4"});
+  doc.setFontSize(14);
+  doc.text(`Solutions possibles - ${currentSheetName || "feuille analysée"}`, 14, 12);
+  doc.setFontSize(9);
+  doc.text(`Export généré depuis l’analyse HTML - ${body.length} proposition(s)`, 14, 18);
+  doc.autoTable({
+    head:[["Score","Risque","Date","Agent proposé","Matricule","Repos avant","Repos après","Couv. actuelle","Couv. après","Séq. max","Proposition"]],
+    body,
+    startY:24,
+    theme:"grid",
+    styles:{fontSize:7.5, cellPadding:1.8, overflow:"linebreak", valign:"middle"},
+    headStyles:{fillColor:[201,58,58], textColor:[255,255,255]},
+    columnStyles:{
+      0:{cellWidth:20},
+      1:{cellWidth:42, fontStyle:"bold"},
+      2:{cellWidth:20},
+      3:{cellWidth:18, halign:"center"},
+      4:{cellWidth:18, halign:"center"},
+      5:{cellWidth:22, halign:"center"},
+      6:{cellWidth:20, halign:"center"},
+      7:{cellWidth:18, halign:"center"},
+      8:{cellWidth:105}
+    },
+    margin:{left:8,right:8}
+  });
+  doc.save(`solutions_${safeFilePart(currentSheetName)}.pdf`);
+}
+
+function buildAgentExportRows(){
+  const q = norm($("agentSearch").value);
+  return lastResult.agentStats
+    .filter(a => !q || norm(a.name).includes(q) || norm(a.matricule).includes(q))
+    .map(a => ({
+      "Agent": a.name || "",
+      "Matricule": a.matricule || "",
+      "Jours travaillés": a.work,
+      "Repos": a.rest,
+      "Absences": a.absence,
+      "Temps de travail": Number(a.totalHours.toFixed(2)),
+      "Plus longue séquence travaillée": a.maxSeq
+    }));
+}
+
+function exportAgentsExcel(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const rows = buildAgentExportRows();
+  if(rows.length === 0){
+    rows.push({"Agent":"Aucun agent dans le filtre", "Matricule":"", "Jours travaillés":"", "Repos":"", "Absences":"", "Temps de travail":"", "Plus longue séquence travaillée":""});
+  }
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const range = XLSX.utils.decode_range(ws["!ref"]);
+  ws["!autofilter"] = {ref: ws["!ref"]};
+  ws["!cols"] = [{wch:32},{wch:16},{wch:16},{wch:10},{wch:12},{wch:18},{wch:28}];
+  for(let C = range.s.c; C <= range.e.c; ++C){
+    const cell = ws[XLSX.utils.encode_cell({r:0,c:C})];
+    if(cell){
+      cell.s = {font:{bold:true,color:{rgb:"FFFFFF"}}, fill:{fgColor:{rgb:"13294B"}}, alignment:{horizontal:"center"}};
+    }
+  }
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Agents");
+  XLSX.writeFile(wb, `agents_${safeFilePart(currentSheetName)}.xlsx`);
+}
+
+function exportAgentsPDF(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const jsPDF = window.jspdf?.jsPDF;
+  if(!jsPDF){ alert("Le module PDF n’est pas chargé. Vérifie ta connexion internet ou utilise la version avec librairies intégrées."); return; }
+  const rows = buildAgentExportRows();
+  const body = rows.length ? rows.map(a => [
+    a["Agent"],
+    a["Matricule"],
+    a["Jours travaillés"],
+    a["Repos"],
+    a["Absences"],
+    a["Temps de travail"],
+    a["Plus longue séquence travaillée"]
+  ]) : [["Aucun agent dans le filtre", "", "", "", "", "", ""]];
+  const doc = new jsPDF({orientation:"landscape", unit:"mm", format:"a4"});
+  doc.setFontSize(14);
+  doc.text(`Synthèse agents - ${currentSheetName || "feuille analysée"}`, 14, 12);
+  doc.setFontSize(9);
+  doc.text(`Export généré depuis l’analyse HTML - ${lastResult.agents.length} agents détectés`, 14, 18);
+  doc.autoTable({
+    head:[["Agent","Matricule","Jours travaillés","Repos","Absences","Temps de travail","Plus longue séquence"]],
+    body,
+    startY:24,
+    theme:"grid",
+    styles:{fontSize:8, cellPadding:2, overflow:"linebreak", valign:"middle"},
+    headStyles:{fillColor:[19,41,75], textColor:[255,255,255]},
+    columnStyles:{0:{cellWidth:55, fontStyle:"bold"}, 5:{halign:"right"}, 6:{halign:"center"}},
+    margin:{left:10,right:10}
+  });
+  doc.save(`agents_${safeFilePart(currentSheetName)}.pdf`);
+}
+
+
+
+function exportFullReportPDF(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const jsPDF = window.jspdf?.jsPDF;
+  if(!jsPDF){ alert("Le module PDF n’est pas chargé. Vérifie ta connexion internet ou utilise la version avec librairies intégrées."); return; }
+  const doc = new jsPDF({orientation:"landscape", unit:"mm", format:"a4"});
+  let y = 12;
+  doc.setFontSize(16);
+  doc.text(`Rapport complet - ${currentSheetName || "feuille analysée"}`, 14, y);
+  y += 8;
+
+  doc.setFontSize(9);
+  doc.text(`Agents : ${lastResult.agents.length} | Dates : ${lastResult.dateCols.length} | Anomalies : ${lastResult.anomalies.length} | Solutions : ${lastResult.solutions.length} | Écartés : ${(lastResult.rejected||[]).length}`, 14, y);
+  y += 6;
+
+  doc.autoTable({
+    head:[["Indicateur","Valeur"]],
+    body:[
+      ["Agents détectés", lastResult.agents.length],
+      ["Dates détectées", lastResult.dateCols.length],
+      ["Services TAS non couverts", lastResult.uncoveredServices.length],
+      ["Solutions possibles", lastResult.solutions.length],
+      ["Anomalies totales", lastResult.anomalies.length]
+    ],
+    startY:y,
+    theme:"grid",
+    styles:{fontSize:8},
+    headStyles:{fillColor:[19,41,75], textColor:[255,255,255]},
+    margin:{left:10,right:10}
+  });
+
+  y = doc.lastAutoTable.finalY + 8;
+  doc.autoTable({
+    head:[["Anomalie","Agent","Date","Détail"]],
+    body:(lastResult.anomalies.length ? lastResult.anomalies : [{type:"Aucune anomalie",agent:"",date:"",detail:""}]).slice(0,80).map(a=>[cleanText(a.type),a.agent||"",a.date||"",a.detail||""]),
+    startY:y,
+    theme:"grid",
+    styles:{fontSize:7, overflow:"linebreak"},
+    headStyles:{fillColor:[201,58,58], textColor:[255,255,255]},
+    margin:{left:10,right:10}
+  });
+
+  doc.addPage("a4","landscape");
+  doc.setFontSize(14);
+  doc.text("Solutions possibles", 14, 12);
+  doc.autoTable({
+    head:[["Score","Risque","Date","Agent","Repos après","Séq. max","Proposition"]],
+    body:(lastResult.solutions.length ? lastResult.solutions : [{score:0,risk:"",date:"Aucune solution",agent:"",reposApres:"",sequenceMaxApres:"",detail:""}]).slice(0,100).map(s=>[
+      Math.round(s.score||0),s.risk||"",s.date||"",s.agent||"",s.reposApres??"",s.sequenceMaxApres??"",s.detail||""
+    ]),
+    startY:18,
+    theme:"grid",
+    styles:{fontSize:7, overflow:"linebreak"},
+    headStyles:{fillColor:[19,41,75], textColor:[255,255,255]},
+    margin:{left:10,right:10}
+  });
+
+  doc.addPage("a4","landscape");
+  doc.setFontSize(14);
+  doc.text("Synthèse agents", 14, 12);
+  doc.autoTable({
+    head:[["Agent","Matricule","Jours travaillés","Repos","Absences","Temps total","Séquence max"]],
+    body:lastResult.agentStats.map(a=>[a.name,a.matricule,a.workDays,a.rest,a.absence,a.totalHours.toFixed(2)+" h",a.maxSeq]),
+    startY:18,
+    theme:"grid",
+    styles:{fontSize:7},
+    headStyles:{fillColor:[19,41,75], textColor:[255,255,255]},
+    margin:{left:10,right:10}
+  });
+
+  doc.save(`rapport_complet_${safeFilePart(currentSheetName)}.pdf`);
+}
+
+function exportAll(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  exportAgentsExcel();
+  exportWorkloadExcel();
+  exportAnomaliesExcel();
+  exportSolutionsExcel();
+  exportPlanningExcel();
+  exportFullReportPDF();
+}
+
+function exportPlanningExcel(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const q = norm($("agentSearch").value);
+  const header=["Agent"].concat(lastResult.dateCols.map(d=>fmtDate(d.date)));
+  const aoa=[header];
+  lastResult.agents
+    .filter(a=>!q || norm(a.name).includes(q) || norm(a.matricule).includes(q))
+    .forEach(a=>{
+      aoa.push([a.name].concat(a.days.map(d=>d.hours?`${d.code} (${d.hours.toFixed(2)} h)`:d.code)));
+    });
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws["!autofilter"]={ref:ws["!ref"]};
+  ws["!cols"]=[{wch:30}].concat(new Array(header.length-1).fill({wch:14}));
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Planning");
+  XLSX.writeFile(wb,`planning_${safeFilePart(currentSheetName)}.xlsx`);
+}
+
+function exportPlanningPDF(){
+  if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+  const jsPDF = window.jspdf?.jsPDF;
+  if(!jsPDF){ alert("Le module PDF n’est pas chargé. Vérifie ta connexion internet ou utilise la version avec librairies intégrées."); return; }
+  const q = norm($("agentSearch").value);
+  const head = [["Agent"].concat(lastResult.dateCols.map(d => fmtDate(d.date)))];
+  const body = lastResult.agents
+    .filter(a => !q || norm(a.name).includes(q) || norm(a.matricule).includes(q))
+    .map(a => [a.name].concat(a.days.map(d => {
+      const h = d.hours ? `\n${d.hours.toFixed(2)} h` : "";
+      return `${d.code || ""}${h}`;
+    })));
+  const doc = new jsPDF({orientation:"landscape", unit:"mm", format:"a3"});
+  doc.setFontSize(14);
+  doc.text(`Planning - ${currentSheetName || "feuille analysée"}`, 14, 12);
+  doc.setFontSize(9);
+  doc.text(`Export généré depuis l’analyse HTML - ${lastResult.agents.length} agents - ${lastResult.dateCols.length} dates`, 14, 18);
+  doc.autoTable({
+    head,
+    body,
+    startY:24,
+    theme:"grid",
+    styles:{fontSize:5, cellPadding:1.1, overflow:"linebreak", halign:"center", valign:"middle"},
+    headStyles:{fillColor:[19,41,75], textColor:[255,255,255]},
+    columnStyles:{0:{cellWidth:42, halign:"left", fontStyle:"bold"}},
+    margin:{left:8,right:8},
+    didParseCell:function(data){
+      if(data.section === "body" && data.column.index > 0){
+        const txt = String(data.cell.raw || "").split("\n")[0].trim().toUpperCase();
+        const cls = classify(txt, parseList("restCodes"), parseList("absenceCodes"));
+        if(cls === "rest") data.cell.styles.fillColor = [232,247,236];
+        else if(cls === "absence") data.cell.styles.fillColor = [255,242,204];
+        else if(cls === "work") data.cell.styles.fillColor = [234,242,255];
+      }
+    }
+  });
+  doc.save(`planning_${safeFilePart(currentSheetName)}.pdf`);
+}
+
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+    document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+    btn.classList.add("active");
+    $(btn.dataset.view).classList.add("active");
+  });
+});
+
+
+
+let currentLang = "fr";
+const I18N = {
+  fr:{
+    appTitle:"Aide dans l’analyse de la programmation",
+    appSubtitle:"Charge un fichier Excel, la feuille “Modifications faite” est analysée en priorité. Si elle n’existe pas, la première feuille est utilisée.",
+    tabDashboard:"Tableau de bord", tabSettings:"Paramètres", tabQuality:"Qualité fichier", tabAgents:"Agents", tabWorkload:"Charge de travail", tabAnomalies:"Anomalies",
+    tabSolutions:"Solution(s) possible(s)", tabPlanning:"Vue planning", tabCalendar:"Calendrier", tabMethod:"Méthode", tabHelp:"Aide",
+    rejectedTitle:"Agents écartés par l’optimisation",
+    rejectedText:"Cette liste explique pourquoi certains agents ne peuvent pas être proposés pour couvrir une journée TAS.",
+    dark:"Activer le mode sombre", light:"Revenir au mode clair"
+  },
+  es:{
+    appTitle:"Análisis automático de planificación Excel",
+    appSubtitle:"Carga un archivo Excel. La hoja “Modifications faite” se analiza con prioridad. Si no existe, se usa la primera hoja.",
+    tabDashboard:"Panel de control", tabSettings:"Parámetros", tabQuality:"Calidad del archivo", tabAgents:"Agentes", tabWorkload:"Carga de trabajo", tabAnomalies:"Anomalías",
+    tabSolutions:"Solución(es) posible(s)", tabPlanning:"Vista de planificación", tabCalendar:"Calendario", tabMethod:"Método", tabHelp:"Ayuda",
+    rejectedTitle:"Agentes descartados por la optimización",
+    rejectedText:"Esta lista explica por qué algunos agentes no pueden proponerse para cubrir una jornada TAS.",
+    dark:"Activar modo oscuro", light:"Volver al modo claro"
+  },
+  en:{
+    appTitle:"Automatic Excel roster analysis",
+    appSubtitle:"Load an Excel file. The “Modifications faite” sheet is analysed first. If it does not exist, the first sheet is used.",
+    tabDashboard:"Dashboard", tabSettings:"Settings", tabQuality:"File quality", tabAgents:"Agents", tabWorkload:"Workload", tabAnomalies:"Anomalies",
+    tabSolutions:"Possible solution(s)", tabPlanning:"Roster view", tabCalendar:"Calendar", tabMethod:"Method", tabHelp:"Help",
+    rejectedTitle:"Agents rejected by optimisation",
+    rejectedText:"This list explains why some agents cannot be proposed to cover a TAS duty.",
+    dark:"Enable dark mode", light:"Return to light mode"
+  }
+};
+
+function applyTranslation(lang){
+  currentLang = lang;
+  const t = I18N[lang] || I18N.fr;
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const key = el.getAttribute("data-i18n");
+    if(t[key]) el.textContent = t[key];
+  });
+  document.querySelectorAll(".langBtn").forEach(btn=>btn.classList.toggle("activeLang", btn.dataset.lang === lang));
+  const isDark = document.body.classList.contains("dark");
+  themeToggle.title = isDark ? t.light : t.dark;
+  themeToggle.setAttribute("aria-label", themeToggle.title);
+  if(rawRows.length) renderAll();
+}
+
+document.querySelectorAll(".langBtn").forEach(btn=>{
+  btn.addEventListener("click",()=>applyTranslation(btn.dataset.lang));
+});
+
+const helpToggle = $("helpToggle");
+helpToggle.addEventListener("click", ()=>{
+  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  const helpTab = document.querySelector('.tab[data-view="help"]');
+  if(helpTab) helpTab.classList.add("active");
+  $("help").classList.add("active");
+  window.scrollTo({top:0, behavior:"smooth"});
+});
+
+const themeToggle = $("themeToggle");
+themeToggle.addEventListener("click", ()=>{
+  const dark = document.body.classList.toggle("dark");
+  themeToggle.textContent = dark ? "☀️" : "🌙";
+  const t = I18N[currentLang] || I18N.fr;
+  themeToggle.title = dark ? t.light : t.dark;
+  themeToggle.setAttribute("aria-label", themeToggle.title);
+});
+
+
+function syncSettingsPanelFromTop(){
+  if($("settingsRestCodes")) $("settingsRestCodes").value = $("restCodes").value;
+  if($("settingsAbsenceCodes")) $("settingsAbsenceCodes").value = $("absenceCodes").value;
+  if($("settingsMaxConsec")) $("settingsMaxConsec").value = $("maxConsec").value;
+  if($("settingsMinRestAgent")) $("settingsMinRestAgent").value = $("minRestAgent").value;
+}
+function applySettingsPanel(){
+  $("restCodes").value = $("settingsRestCodes").value;
+  $("absenceCodes").value = $("settingsAbsenceCodes").value;
+  $("maxConsec").value = $("settingsMaxConsec").value;
+  $("minRestAgent").value = $("settingsMinRestAgent").value;
+  if($("settingsProgramSite")) $("programSite").value = $("settingsProgramSite").value;
+  renderAll();
+}
+syncSettingsPanelFromTop();
+$("applySettingsBtn").addEventListener("click", applySettingsPanel);
+
+
+function getSavedSettings(){
+  return {
+    restCodes: $("restCodes")?.value || "R,RP,REPOS",
+    absenceCodes: $("absenceCodes")?.value || "CP,CA,FORMATION,MALADIE,ABS",
+    maxConsec: $("maxConsec")?.value || "5",
+    minRestAgent: $("minRestAgent")?.value || "8",
+    minCoverage: $("minCoverage")?.value || "1",
+    uncoveredMode: $("uncoveredMode")?.value || "zero",
+    programSite: $("programSite")?.value || "paris",
+    tasLabel: $("tasLabel")?.value || "TAS",
+    linkedPairs: $("linkedPairs")?.value || "300>301,600>601"
+  };
+}
+
+function applySavedSettings(settings){
+  if(!settings) return;
+  Object.entries({
+    restCodes:"restCodes",
+    absenceCodes:"absenceCodes",
+    maxConsec:"maxConsec",
+    minRestAgent:"minRestAgent",
+    minCoverage:"minCoverage",
+    uncoveredMode:"uncoveredMode",
+    programSite:"programSite",
+    tasLabel:"tasLabel",
+    linkedPairs:"linkedPairs"
+  }).forEach(([key,id])=>{
+    if($(id) && settings[key] !== undefined) $(id).value = settings[key];
+  });
+  syncSettingsPanelFromTop();
+}
+
+function updateAutoSaveInfo(data=null){
+  const box = $("autoSaveInfo");
+  const actions = $("autoSaveActions");
+  if(!box) return;
+  const saved = data || (()=>{
+    try{return JSON.parse(localStorage.getItem(GC_AUTOSAVE_KEY)||"null");}catch(e){return null;}
+  })();
+  if(!saved){
+    box.style.display = "none";
+    if(actions) actions.style.display = "none";
+    return;
+  }
+  const date = saved.savedAt ? new Date(saved.savedAt) : null;
+  const dateTxt = date && !isNaN(date) ? date.toLocaleString("fr-FR") : "date inconnue";
+  box.style.display = "block";
+  if(actions) actions.style.display = "flex";
+  box.innerHTML = `💾 Sauvegarde automatique active — dernier planning mémorisé : <strong>${saved.fileName || "fichier Excel"}</strong> · Feuille : <strong>${saved.currentSheetName || "non précisée"}</strong> · Sauvegardé le ${dateTxt}.<br>Au prochain démarrage, ce planning sera rechargé automatiquement. Charger un nouveau fichier Excel remplacera cette sauvegarde.`;
+}
+
+function saveCurrentPlanningToBrowser(){
+  if(isRestoringSavedPlanning) return;
+  if(!persistedSheets || !currentSheetName) return;
+  try{
+    const payload = {
+      appVersion:"V03.16",
+      fileName: currentFileName || "planning.xlsx",
+      savedAt: new Date().toISOString(),
+      currentSheetName,
+      sheetNames: Object.keys(persistedSheets),
+      sheets: persistedSheets,
+      settings: getSavedSettings()
+    };
+    localStorage.setItem(GC_AUTOSAVE_KEY, JSON.stringify(payload));
+    updateAutoSaveInfo(payload);
+  }catch(err){
+    console.warn("Sauvegarde automatique impossible", err);
+    const box = $("autoSaveInfo");
+    if(box){
+      box.style.display = "block";
+      box.innerHTML = "⚠️ Sauvegarde automatique impossible : le fichier Excel est probablement trop volumineux pour le stockage du navigateur.";
+    }
+  }
+}
+
+function restorePlanningFromBrowser(){
+  let saved = null;
+  try{ saved = JSON.parse(localStorage.getItem(GC_AUTOSAVE_KEY)||"null"); }catch(e){ saved = null; }
+  if(!saved || !saved.sheets) { updateAutoSaveInfo(null); return false; }
+  isRestoringSavedPlanning = true;
+  try{
+    workbook = null;
+    persistedSheets = saved.sheets;
+    currentFileName = saved.fileName || "planning mémorisé";
+    const names = saved.sheetNames?.length ? saved.sheetNames : Object.keys(persistedSheets);
+    $("sheetSelect").innerHTML = names.map(n=>`<option value="${n}">${n}</option>`).join("");
+    const sheet = saved.currentSheetName && persistedSheets[saved.currentSheetName] ? saved.currentSheetName : names[0];
+    $("sheetSelect").value = sheet;
+    currentSheetName = sheet;
+    rawRows = persistedSheets[sheet] || [];
+    applySavedSettings(saved.settings);
+    renderAll();
+    $("status").textContent = `Planning restauré automatiquement : ${currentFileName} — feuille « ${sheet} ».`;
+    updateAutoSaveInfo(saved);
+    return true;
+  }finally{
+    isRestoringSavedPlanning = false;
+  }
+}
+
+function clearSavedPlanning(){
+  localStorage.removeItem(GC_AUTOSAVE_KEY);
+  persistedSheets = null;
+  currentFileName = "";
+  updateAutoSaveInfo(null);
+  $("status").textContent = "Planning mémorisé effacé. Recharge un fichier Excel pour créer une nouvelle sauvegarde.";
+}
+
+$("fileInput").addEventListener("change", async e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const data = await file.arrayBuffer();
+  workbook = XLSX.read(data, {type:"array", cellDates:false});
+  currentFileName = file.name || "planning.xlsx";
+  persistedSheets = {};
+  workbook.SheetNames.forEach(name=>{
+    const ws = workbook.Sheets[name];
+    persistedSheets[name] = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null, blankrows:false});
+  });
+  $("sheetSelect").innerHTML = workbook.SheetNames.map(n=>`<option value="${n}">${n}</option>`).join("");
+  const preferred = workbook.SheetNames.find(n=>norm(n)==="MODIFICATIONS FAITE") || workbook.SheetNames[0];
+  $("sheetSelect").value = preferred;
+  loadSheet(preferred);
+  saveCurrentPlanningToBrowser();
+});
+
+$("sheetSelect").addEventListener("change", e=>{loadSheet(e.target.value); saveCurrentPlanningToBrowser();});
+["restCodes","absenceCodes","maxConsec","minRestAgent","minCoverage","uncoveredMode","programSite","tasLabel","linkedPairs","settingsProgramSite"].forEach(id=>{ if($(id)) $(id).addEventListener("input",()=>{renderAll(); saveCurrentPlanningToBrowser();}); });
+["agentSearch","workloadSearch","workloadSort"].forEach(id=>{ if($(id)) $(id).addEventListener("input",renderAll); });
+$("recalcBtn").addEventListener("click",()=>{syncSettingsPanelFromTop(); renderAll(); saveCurrentPlanningToBrowser();});
+if($("clearSavedPlanningBtn")) $("clearSavedPlanningBtn").addEventListener("click", clearSavedPlanning);
+$("exportAnomaliesBtn").addEventListener("click", exportAnomaliesExcel);
+$("exportAnomaliesPdfBtn").addEventListener("click", exportAnomaliesPDF);
+$("exportSolutionsExcelBtn").addEventListener("click", exportSolutionsExcel);
+$("exportSolutionsPdfBtn").addEventListener("click", exportSolutionsPDF);
+if($("exportRejectedExcelBtn")) $("exportRejectedExcelBtn").addEventListener("click", exportRejectedExcel);
+if($("exportRejectedPdfBtn")) $("exportRejectedPdfBtn").addEventListener("click", exportRejectedPDF);
+$("exportAgentsExcelBtn").addEventListener("click", exportAgentsExcel);
+$("exportAgentsPdfBtn").addEventListener("click", exportAgentsPDF);
+  if($("exportWorkloadExcelBtn")) $("exportWorkloadExcelBtn").addEventListener("click", exportWorkloadExcel);
+  if($("exportWorkloadPdfBtn")) $("exportWorkloadPdfBtn").addEventListener("click", exportWorkloadPDF);
+$("exportPlanningExcelBtn").addEventListener("click", exportPlanningExcel);
+$("exportPlanningPdfBtn").addEventListener("click", exportPlanningPDF);
+$("exportFullReportPdfBtn").addEventListener("click", exportFullReportPDF);
+$("exportAllBtn").addEventListener("click", exportAll);
+
+function loadSheet(name){
+  currentSheetName = name;
+  if(persistedSheets && persistedSheets[name]){
+    rawRows = persistedSheets[name];
+  }else if(workbook && workbook.Sheets[name]){
+    const ws = workbook.Sheets[name];
+    rawRows = XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:null, blankrows:false});
+  }else{
+    rawRows = [];
+  }
+  renderAll();
+}
+
+restorePlanningFromBrowser();
+</script>
+
+<script>
+(function(){
+function normLocal(v){return String(v ?? "").trim().toUpperCase();}
+function fmtDateLocal(d){try{return d?d.toLocaleDateString("fr-FR",{day:"2-digit",month:"2-digit"}):""}catch(e){return ""}}
+function cleanTextLocal(v){const div=document.createElement("div");div.innerHTML=String(v ?? "");return div.textContent||div.innerText||"";}
+window.cellCode=function(d){
+  const code=String(d.code||"").trim(); const n=normLocal(code); const visualMode=document.getElementById("visualMode")?.value||"normal";
+  const linked=["300","301","400","401","600","601"].includes(n);
+  let cls="cellEmpty"; if(d.type==="rest") cls="cellRest"; else if(d.type==="absence") cls="cellAbsence"; else if(d.type==="work") cls="cellService"; if(visualMode==="pairs"&&linked) cls="cellPair";
+  const h=d.hours?`<br><span class="small">${d.hours.toFixed(2)} h</span>`:"";
+  const q=normLocal(document.getElementById("smartSearch")?.value||""); const hi=q&&(n.includes(q)||normLocal(d.type).includes(q))?" highlightCell":"";
+  return `<span class="${cls}${hi}" title="${code||"Vide"}">${code||""}${h}</span>`;
+};
+window.renderPlanning=function(r){
+  const q=normLocal((document.getElementById("agentSearch")?.value||"")||(document.getElementById("smartSearch")?.value||""));
+  const head=["Agent"].concat(r.dateCols.map(d=>fmtDateLocal(d.date)));
+  const filtered=r.agents.filter(a=>!q||normLocal(a.name).includes(q)||normLocal(a.matricule).includes(q)||a.days.some(d=>normLocal(d.code).includes(q)||normLocal(d.type).includes(q)));
+  const rows=filtered.map(a=>[`<span class="agentLink">${a.name}</span>`].concat(a.days.map(d=>window.cellCode(d))));
+  table("planningTable",head,rows);
+  document.querySelectorAll("#planningTable tbody tr").forEach((tr,idx)=>{tr.classList.add("agentClickable");tr.addEventListener("click",()=>openAgentDrawerLocal(filtered[idx],r));});
+  if((document.getElementById("visualMode")?.value||"normal")==="heat") applyHeatmapLocal(r,filtered);
+};
+function openAgentDrawerLocal(agent,r){
+  if(!agent||!r)return; const stats=(r.agentStats||[]).find(a=>a.name===agent.name)||{}; const anomalies=(r.anomalies||[]).filter(a=>a.agent===agent.name); const linked=["300","301","400","401","600","601"];
+  const timeline=agent.days.map(d=>{const n=normLocal(d.code);const cls=linked.includes(n)?"pair":d.type;return `<span class="agentDayDot ${cls}" title="${fmtDateLocal(d.date)} : ${d.code||"vide"}"></span>`}).join("");
+  document.getElementById("agentDrawerContent").innerHTML=`<h2>${agent.name}</h2><p class="small">${agent.matricule?"Matricule : "+agent.matricule:"Matricule non détecté"}</p><div class="agentMetric"><span>Jours travaillés</span><strong>${stats.workDays??stats.work??"-"}</strong></div><div class="agentMetric"><span>Repos</span><strong>${stats.rest??"-"}</strong></div><div class="agentMetric"><span>Absences</span><strong>${stats.absence??"-"}</strong></div><div class="agentMetric"><span>Temps total</span><strong>${stats.totalHours?stats.totalHours.toFixed(2)+" h":"0 h"}</strong></div><div class="agentMetric"><span>Plus longue séquence</span><strong>${stats.maxSeq??"-"}</strong></div><div class="agentMetric"><span>Anomalies agent</span><strong>${anomalies.length}</strong></div><h3>Chronologie</h3><div class="agentTimeline">${timeline}</div><h3>Points à vérifier</h3><p class="small">${anomalies.length?anomalies.map(a=>`• ${a.date} — ${cleanTextLocal(a.type)} : ${a.detail}`).join("<br>"):"Aucune anomalie détectée pour cet agent."}</p>`;
+  document.getElementById("agentDrawer").classList.add("open");
+}
+function applyHeatmapLocal(r,filtered){
+  const rows=document.querySelectorAll("#planningTable tbody tr"); rows.forEach((tr,idx)=>{const ag=filtered[idx]; if(!ag)return; const work=ag.days.filter(d=>d.type==="work").length; const level=work>=22?4:work>=18?3:work>=14?2:1; tr.querySelectorAll("td").forEach((td,i)=>{if(i>0)td.classList.add("heatCell"+level);});});
+}
+function enhanceSolutionCardsLocal(){
+  if(!window.lastResult||!document.getElementById("solutionsTable"))return; const old=document.getElementById("solutionCards"); if(old)old.remove(); const target=document.getElementById("solutions"); if(!target)return; const cards=document.createElement("div"); cards.id="solutionCards"; cards.className="panel"; const rows=(window.lastResult.solutions||[]).slice(0,5);
+  cards.innerHTML=`<h3>Meilleures propositions</h3>`+(rows.length?rows.map((s,i)=>`<div class="solutionCard"><div><div class="solutionRank">#${i+1}</div><div class="scoreBar"><span class="scoreFill" style="width:${Math.max(0,Math.min(100,Math.round(s.score||0)))}%"></span></div><div class="small">${Math.round(s.score||0)} %</div></div><div class="solutionText"><strong>${s.agent}</strong> — ${s.date}<br>${s.detail||""}<br><span class="small">Repos après : ${s.reposApres} · Séquence max : ${s.sequenceMaxApres} · Risque : ${s.risk}</span></div></div>`).join(""):`<p class="small">Aucune solution automatique trouvée.</p>`);
+  const tablewrap=target.querySelector(".tablewrap"); if(tablewrap)target.insertBefore(cards,tablewrap);
+}
+function setup(){
+  document.getElementById("agentDrawerClose")?.addEventListener("click",()=>document.getElementById("agentDrawer")?.classList.remove("open"));
+  document.getElementById("scrollTopBtn")?.addEventListener("click",()=>window.scrollTo({top:0,behavior:"smooth"}));
+  document.getElementById("scrollPlanningBtn")?.addEventListener("click",()=>{document.querySelector('.tab[data-view="planning"]')?.click();setTimeout(()=>document.getElementById("planning")?.scrollIntoView({behavior:"smooth",block:"start"}),60);});
+  document.getElementById("openFirstAnomalyBtn")?.addEventListener("click",()=>{document.querySelector('.tab[data-view="anomalies"]')?.click();setTimeout(()=>document.getElementById("anomalies")?.scrollIntoView({behavior:"smooth",block:"start"}),60);});
+  document.getElementById("smartSearch")?.addEventListener("input",()=>{if(window.lastResult){renderPlanning(window.lastResult);renderAgents(window.lastResult);}});
+  document.getElementById("visualMode")?.addEventListener("change",()=>{if(window.lastResult)renderPlanning(window.lastResult);});
+}
+const oldRenderAll=window.renderAll;
+if(typeof oldRenderAll==="function"){
+  window.renderAll=function(){oldRenderAll();setTimeout(enhanceSolutionCardsLocal,80)};
+}
+setTimeout(setup,0);
+})();
+</script>
+
+
+
+<script>
+(function(){
+  const idsToPersist=["restCodes","absenceCodes","maxConsec","minRestAgent","minCoverage","uncoveredMode","programSite","tasLabel","linkedPairs","settingsProgramSite"];
+  const storeKey="planningAnalyzer.v0311.settings";
+  const $id=(id)=>document.getElementById(id);
+  const normV=(v)=>String(v??"").trim().toUpperCase();
+  const safeTxt=(html)=>{const d=document.createElement('div');d.innerHTML=String(html??'');return d.textContent||d.innerText||''};
+  const debounce=(fn,delay=220)=>{let t;return function(...args){clearTimeout(t);t=setTimeout(()=>fn.apply(this,args),delay)}};
+
+  function readSettings(){try{return JSON.parse(localStorage.getItem(storeKey)||"{}")}catch(e){return {}}}
+  function saveSettings(){const o={};idsToPersist.forEach(id=>{const el=$id(id);if(el)o[id]=el.value});try{localStorage.setItem(storeKey,JSON.stringify(o))}catch(e){}}
+  function applyPersistedSettings(){const o=readSettings();Object.entries(o).forEach(([id,v])=>{const el=$id(id);if(el&&v!==undefined)el.value=v});if(typeof syncSettingsPanelFromTop==='function')syncSettingsPanelFromTop();}
+  applyPersistedSettings();
+  idsToPersist.forEach(id=>$id(id)?.addEventListener('input',saveSettings));
+
+  const snapshotIds=["restCodes","absenceCodes","maxConsec","minRestAgent","minCoverage","uncoveredMode","programSite","agentSearch","workloadSearch","workloadSort","tasLabel","linkedPairs","settingsProgramSite"];
+  let undoSnapshot=null;
+  function getSnapshot(){const o={};snapshotIds.forEach(id=>{const el=$id(id);if(el)o[id]=el.value});return o}
+  function setSnapshot(o){Object.entries(o||{}).forEach(([id,v])=>{const el=$id(id);if(el)el.value=v});saveSettings();if(typeof syncSettingsPanelFromTop==='function')syncSettingsPanelFromTop();if(typeof renderAll==='function')renderAll();}
+  const recalcOld=$id('recalcBtn');
+  if(recalcOld){const clone=recalcOld.cloneNode(true);recalcOld.replaceWith(clone);clone.addEventListener('click',()=>{undoSnapshot=getSnapshot();$id('undoRecalcBtn')?.removeAttribute('disabled');if(typeof syncSettingsPanelFromTop==='function')syncSettingsPanelFromTop();saveSettings();if(typeof renderAll==='function')renderAll();});}
+  $id('undoRecalcBtn')?.addEventListener('click',()=>{if(undoSnapshot){setSnapshot(undoSnapshot);$id('undoRecalcBtn').setAttribute('disabled','disabled');}});
+
+  ['agentSearch','workloadSearch'].forEach(id=>{
+    const el=$id(id); if(!el) return;
+    const clone=el.cloneNode(true); el.replaceWith(clone);
+    clone.addEventListener('input',debounce(()=>{if(typeof renderAll==='function')renderAll();},220));
+  });
+  $id('smartSearch')?.addEventListener('input',debounce(()=>{try{if(lastResult){renderPlanning(lastResult);renderAgents(lastResult)}}catch(e){}},220));
+
+  $id('fileInput')?.addEventListener('change',()=>{document.body.classList.add('loadingExcel');setTimeout(()=>document.body.classList.remove('loadingExcel'),1800)},true);
+
+  const originalRenderAll=window.renderAll;
+  if(typeof originalRenderAll==='function'){
+    window.renderAll=function(){
+      originalRenderAll();
+      setTimeout(()=>{animateBars();decorateRows();refreshPdfDateSelectors();},40);
+      document.body.classList.remove('loadingExcel');
+    };
+  }
+  const originalRenderKpis=window.renderKpis;
+  if(typeof originalRenderKpis==='function'){
+    window.renderKpis=function(r){
+      originalRenderKpis(r);
+      const cards=document.querySelectorAll('#kpis .kpi');
+      cards.forEach(card=>{
+        const label=normV(card.querySelector('.label')?.textContent||'');
+        const value=safeTxt(card.querySelector('.value')?.innerHTML||'');
+        const n=parseFloat(value.replace(',', '.'))||0;
+        if(label.includes('ANOMALIES')||label.includes('NON COUVERTES')) card.classList.add(n>0?'kpiCritical':'kpiOk');
+        else if(label.includes('SOLUTIONS')) card.classList.add(n>0?'kpiOk':'kpiWarn');
+        animateNumber(card.querySelector('.value'),value);
+      });
+    };
+  }
+  function animateNumber(el,finalText){
+    if(!el) return; const m=String(finalText).match(/^([0-9]+(?:[\.,][0-9]+)?)(.*)$/); if(!m)return;
+    const end=parseFloat(m[1].replace(',','.')); const suffix=m[2]||''; const decimals=(m[1].split(/[\.,]/)[1]||'').length; const start=performance.now();
+    function step(t){const p=Math.min(1,(t-start)/520);const eased=1-Math.pow(1-p,3);const v=end*eased;el.textContent=(decimals?v.toFixed(decimals):Math.round(v))+suffix;if(p<1)requestAnimationFrame(step)}
+    requestAnimationFrame(step);
+  }
+  function animateBars(){
+    document.querySelectorAll('.workloadBarFill,.scoreFill,.agentBarFill').forEach(el=>{
+      const w=el.style.width||'0%'; el.style.setProperty('--final-width',w); el.style.width='0%'; el.removeAttribute('data-final');
+      requestAnimationFrame(()=>requestAnimationFrame(()=>el.setAttribute('data-final','1')));
+    });
+  }
+  function decorateRows(){document.querySelectorAll('tbody tr').forEach((tr,i)=>{tr.classList.add('rowFade');tr.style.animationDelay=Math.min(i*12,220)+'ms'});}
+
+  const oldTable=window.table;
+  window.table=function(id,headers,rows){
+    if(typeof oldTable==='function') oldTable(id,headers,rows);
+    const tbl=$id(id); if(!tbl) return;
+    tbl.querySelectorAll('thead th').forEach((th,index)=>{th.classList.add('sortable');th.addEventListener('click',()=>sortTable(tbl,index,th));});
+  };
+  function sortTable(tbl,index,th){
+    const asc=!th.classList.contains('sortAsc');
+    tbl.querySelectorAll('th').forEach(h=>h.classList.remove('sortAsc','sortDesc'));
+    th.classList.add(asc?'sortAsc':'sortDesc');
+    const tbody=tbl.tBodies[0]; const rows=[...tbody.rows];
+    rows.sort((a,b)=>{
+      const av=safeTxt(a.cells[index]?.innerHTML||'').trim(); const bv=safeTxt(b.cells[index]?.innerHTML||'').trim();
+      const an=parseFloat(av.replace(',','.')); const bn=parseFloat(bv.replace(',','.'));
+      const cmp=!isNaN(an)&&!isNaN(bn)?an-bn:av.localeCompare(bv,'fr',{numeric:true,sensitivity:'base'});
+      return asc?cmp:-cmp;
+    });
+    rows.forEach(r=>tbody.appendChild(r)); decorateRows();
+  }
+
+  function refreshPdfDateSelectors(){
+    let r=null; try{r=lastResult}catch(e){} if(!r||!r.dateCols)return;
+    ['pdfDateStart','pdfDateEnd'].forEach(id=>{
+      const sel=$id(id); if(!sel) return; const old=sel.value;
+      sel.innerHTML='<option value="">Toutes</option>'+r.dateCols.map((d,i)=>`<option value="${i}">${typeof fmtDate==='function'?fmtDate(d.date):i+1}</option>`).join('');
+      if([...sel.options].some(o=>o.value===old))sel.value=old;
+    });
+  }
+  function metricsForRange(agent){
+    let r=null; try{r=lastResult}catch(e){} if(!r)return null;
+    const s=parseInt($id('pdfDateStart')?.value||'0',10)||0;
+    const eRaw=$id('pdfDateEnd')?.value; const e=eRaw===''?(agent.days.length-1):parseInt(eRaw,10);
+    const days=(agent.days||[]).slice(Math.min(s,e),Math.max(s,e)+1);
+    const copy={...agent,days};
+    const totalHours=days.reduce((a,d)=>a+(d.hours||0),0);
+    const workDays=days.filter(d=>d.type==='work').length;
+    const stats={totalHours,workDays,work:workDays,rest:days.filter(d=>d.type==='rest').length,absence:days.filter(d=>d.type==='absence').length,empty:days.filter(d=>d.type==='empty').length,avgHours:workDays?totalHours/workDays:0,maxSeq:typeof longestWorkSequence==='function'?longestWorkSequence(days):0};
+    return typeof workloadMetricsFor==='function'?workloadMetricsFor(copy,stats):null;
+  }
+  function buildPdfRowsFiltered(){
+    let r=null; try{r=lastResult}catch(e){} if(!r)return [];
+    const visibleOnly=($id('pdfOnlyVisible')?.value||'yes')==='yes';
+    const q=normV(visibleOnly?($id('workloadSearch')?.value||''):($id('pdfAgentFilter')?.value||''));
+    const q2=normV($id('pdfAgentFilter')?.value||'');
+    let rows=r.agents.map(a=>metricsForRange(a)).filter(Boolean).filter(m=>{
+      const hay=normV(m.agent+' '+(m.matricule||''));
+      return (!q||hay.includes(q)) && (!q2||hay.includes(q2));
+    });
+    rows.sort((a,b)=>b.globalScore-a.globalScore);
+    return rows;
+  }
+  window.exportWorkloadPDF=function(){
+    let r=null; try{r=lastResult}catch(e){} if(!r){alert('Charge d’abord un fichier Excel.');return;}
+    const jsPDF=window.jspdf?.jsPDF; if(!jsPDF){alert('Le module PDF n’est pas chargé.');return;}
+    const rows=buildPdfRowsFiltered();
+    const body=rows.length?rows.map(m=>[m.agent,m.matricule||'',m.global.label,m.globalScore,m.fatigue.label,m.fatigueScore,m.stress.label,m.stressScore,m.workDays,m.restDays,m.restDeficit,m.totalHours.toFixed(1),m.projectedHours28.toFixed(1),m.projectedRest28.toFixed(1),m.avgHours.toFixed(2),m.maxSeq,m.dispoDays,m.advice]):[['Aucun agent dans le filtre','','','','','','','','','','','','','','','','','']];
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    const ds=$id('pdfDateStart')?.selectedOptions?.[0]?.textContent||'Toutes'; const de=$id('pdfDateEnd')?.selectedOptions?.[0]?.textContent||'Toutes';
+    doc.setFontSize(14); doc.text(`Charge de travail - ${currentSheetName||'feuille analysée'}`,14,12);
+    doc.setFontSize(9); doc.text(`Plage : ${ds} → ${de} - ${rows.length} agent(s)`,14,18);
+    doc.autoTable({head:[["Agent","Matricule","Charge","Score","Fatigue","Score","Stress","Score","Trav.","Repos","Déficit","Heures","Base 28j","Repos 28j","Moy./j","Séq.","DISPO","Lecture"]],body,startY:24,theme:'grid',styles:{fontSize:6.8,cellPadding:1.4,overflow:'linebreak',valign:'middle'},headStyles:{fillColor:[19,41,75],textColor:[255,255,255]},columnStyles:{0:{cellWidth:34,fontStyle:'bold'},17:{cellWidth:62}},margin:{left:7,right:7}});
+    doc.save(`charge_de_travail_filtre_${(currentSheetName||'planning').replace(/[^a-z0-9_-]+/gi,'_')}.pdf`);
+  };
+  const pdfBtn=$id('exportWorkloadPdfBtn'); if(pdfBtn){const c=pdfBtn.cloneNode(true);pdfBtn.replaceWith(c);c.addEventListener('click',()=>window.exportWorkloadPDF());}
+
+  function getFilteredAgentsForDrawer(){let r=null;try{r=lastResult}catch(e){} if(!r)return[]; const q=normV($id('agentSearch')?.value||$id('workloadSearch')?.value||'');return r.agents.filter(a=>!q||normV(a.name).includes(q)||normV(a.matricule).includes(q));}
+  window.openAgentDrawerEnhanced=function(agent){let r=null;try{r=lastResult}catch(e){} if(!agent||!r)return; const agents=getFilteredAgentsForDrawer(); let index=agents.findIndex(a=>a.name===agent.name); if(index<0)index=0;
+    const baseOpen=window.openAgentDrawerLocal||window.openAgentDrawer; if(typeof baseOpen==='function')baseOpen(agent,r);
+    const cont=$id('agentDrawerContent'); if(!cont)return; const nav=document.createElement('div'); nav.className='drawerNav'; nav.innerHTML='<button type="button" class="secondary" id="drawerPrevAgent">← Agent précédent</button><button type="button" class="secondary" id="drawerNextAgent">Agent suivant →</button>'; cont.prepend(nav);
+    $id('drawerPrevAgent')?.addEventListener('click',()=>window.openAgentDrawerEnhanced(agents[(index-1+agents.length)%agents.length]));
+    $id('drawerNextAgent')?.addEventListener('click',()=>window.openAgentDrawerEnhanced(agents[(index+1)%agents.length]));
+  };
+  document.addEventListener('click',function(e){const tr=e.target.closest('#planningTable tbody tr,#agentsTable tbody tr,#workloadTable tbody tr'); if(!tr)return; let r=null;try{r=lastResult}catch(err){} if(!r)return; const name=safeTxt(tr.cells[0]?.innerHTML||'').trim().split('\n')[0]; const ag=r.agents.find(a=>name&&safeTxt(a.name)===name); if(ag){e.stopPropagation();setTimeout(()=>window.openAgentDrawerEnhanced(ag),0);}},true);
+
+  // Relance après installation pour appliquer les surcharges sur le fichier déjà ouvert.
+  setTimeout(()=>{try{if(rawRows&&rawRows.length&&typeof renderAll==='function')renderAll()}catch(e){}},120);
+})();
+
+
+/* ===== CORRECTIF EXPORTS PDF V03.12 : tableaux lisibles ===== */
+(function(){
+  const $v12 = (id)=>document.getElementById(id);
+  function pdfJs(){
+    const jsPDF = window.jspdf?.jsPDF;
+    if(!jsPDF){ alert("Le module PDF n’est pas chargé. Vérifie ta connexion internet."); return null; }
+    return jsPDF;
+  }
+  function fp(){ return (typeof safeFilePart==='function'?safeFilePart(currentSheetName):(currentSheetName||'planning').replace(/[^a-z0-9_-]+/gi,'_')); }
+  function clean(v, max=90){
+    let t = String(v ?? '').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+    return t.length > max ? t.slice(0, max-1) + '…' : t;
+  }
+  function moneyNum(v){ return typeof v === 'number' ? Number(v.toFixed(2)) : v; }
+  function auto(doc, cfg){
+    return doc.autoTable(Object.assign({
+      theme:'grid',
+      styles:{fontSize:6.2, cellPadding:1.1, overflow:'linebreak', valign:'middle', minCellHeight:4.2},
+      headStyles:{fillColor:[19,41,75], textColor:[255,255,255], fontStyle:'bold', fontSize:6.6},
+      alternateRowStyles:{fillColor:[248,250,252]},
+      margin:{left:6,right:6,top:8,bottom:8},
+      pageBreak:'auto',
+      rowPageBreak:'avoid',
+      showHead:'everyPage'
+    }, cfg));
+  }
+  function title(doc, text, sub){
+    doc.setFontSize(12); doc.text(clean(text,110), 10, 10);
+    doc.setFontSize(7.5); doc.text(clean(sub||'',130), 10, 15);
+  }
+
+  window.exportAgentsPDF = function(){
+    if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+    const jsPDF=pdfJs(); if(!jsPDF) return;
+    const rows=(typeof buildAgentExportRows==='function'?buildAgentExportRows():[]);
+    const body=(rows.length?rows:[{"Agent":"Aucun agent dans le filtre"}]).map(a=>[
+      clean(a["Agent"],42), clean(a["Matricule"],18), a["Jours travaillés"]??'', a["Repos"]??'', a["Absences"]??'', clean(a["Temps de travail"],18), a["Plus longue séquence travaillée"]??''
+    ]);
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    title(doc,`Synthèse agents - ${currentSheetName||'feuille analysée'}`,`${body.length} ligne(s) exportée(s)`);
+    auto(doc,{head:[["Agent","Matricule","Trav.","Repos","Abs.","Temps total","Séq. max"]],body,startY:20,
+      styles:{fontSize:7,cellPadding:1.4,overflow:'linebreak',valign:'middle'},
+      headStyles:{fillColor:[19,41,75],textColor:[255,255,255],fontSize:7},
+      columnStyles:{0:{cellWidth:72,fontStyle:'bold'},1:{cellWidth:32},2:{cellWidth:22,halign:'center'},3:{cellWidth:20,halign:'center'},4:{cellWidth:20,halign:'center'},5:{cellWidth:32,halign:'right'},6:{cellWidth:28,halign:'center'}},
+      margin:{left:10,right:10}
+    });
+    doc.save(`agents_${fp()}.pdf`);
+  };
+
+  window.exportAnomaliesPDF = function(){
+    if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+    const jsPDF=pdfJs(); if(!jsPDF) return;
+    const rows=(typeof buildAnomaliesExportRows==='function'?buildAnomaliesExportRows():[]);
+    const body=(rows.length?rows:[{"Type":"Aucune anomalie détectée"}]).map(a=>[
+      clean(a["Type"],42), clean(a["Agent"],34), clean(a["Date / période"],22), clean(a["Détail"],145)
+    ]);
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    title(doc,`Anomalies - ${currentSheetName||'feuille analysée'}`,`${body.length} ligne(s) exportée(s)`);
+    auto(doc,{head:[["Type","Agent","Date / période","Détail"]],body,startY:20,
+      styles:{fontSize:7,cellPadding:1.4,overflow:'linebreak'},
+      headStyles:{fillColor:[201,58,58],textColor:[255,255,255],fontSize:7},
+      columnStyles:{0:{cellWidth:48,fontStyle:'bold'},1:{cellWidth:42},2:{cellWidth:28},3:{cellWidth:160}},
+      margin:{left:8,right:8}
+    });
+    doc.save(`anomalies_${fp()}.pdf`);
+  };
+
+  window.exportSolutionsPDF = function(){
+    if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+    const jsPDF=pdfJs(); if(!jsPDF) return;
+    const rows=(typeof buildSolutionsExportRows==='function'?buildSolutionsExportRows():[]);
+    const body=(rows.length?rows:[{"Date non couverte":"Aucune solution automatique trouvée"}]).map(s=>[
+      s["Score"]??'', clean(s["Risque"],18), clean(s["Date non couverte"],24), clean(s["Agent proposé"],36), clean(s["Matricule"],16), s["Repos avant"]??'', s["Repos après"]??'', s["Couverture actuelle"]??'', s["Couverture après"]??'', s["Séquence max après"]??'', clean(s["Proposition"],125)
+    ]);
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a3'});
+    title(doc,`Solutions possibles - ${currentSheetName||'feuille analysée'}`,`${body.length} proposition(s) exportée(s)`);
+    auto(doc,{head:[["Score","Risque","Date","Agent proposé","Matricule","Repos av.","Repos ap.","Couv. act.","Couv. ap.","Séq.","Proposition"]],body,startY:20,
+      styles:{fontSize:6.5,cellPadding:1.15,overflow:'linebreak'},
+      headStyles:{fillColor:[19,41,75],textColor:[255,255,255],fontSize:6.7},
+      columnStyles:{0:{cellWidth:16,halign:'center'},1:{cellWidth:22},2:{cellWidth:30},3:{cellWidth:48,fontStyle:'bold'},4:{cellWidth:25},5:{cellWidth:18,halign:'center'},6:{cellWidth:18,halign:'center'},7:{cellWidth:20,halign:'center'},8:{cellWidth:20,halign:'center'},9:{cellWidth:16,halign:'center'},10:{cellWidth:165}},
+      margin:{left:7,right:7}
+    });
+    doc.save(`solutions_${fp()}.pdf`);
+  };
+
+  window.exportRejectedPDF = function(){
+    if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+    const jsPDF=pdfJs(); if(!jsPDF) return;
+    const rows=(typeof getRejectedRowsWithFallback==='function'?getRejectedRowsWithFallback():[]);
+    const body=(rows.length?rows:[{"Date non couverte":"Aucun agent écarté à afficher","Raison":"Aucune journée TAS non couverte ou aucun refus détecté avec les paramètres actuels."}]).map(x=>[
+      clean(x["Date non couverte"],24), clean(x["Service"],18), clean(x["Agent écarté"],38), clean(x["Matricule"],14), clean(x["Raison"],130), x["Repos avant"]??'', x["Repos après"]??'', x["Séquence max après"]??''
+    ]);
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+    title(doc,`Agents écartés par l’optimisation - ${currentSheetName||'feuille analysée'}`,`${body.length} ligne(s) exportée(s)`);
+    auto(doc,{head:[["Date","Service","Agent écarté","Matricule","Raison","Repos av.","Repos ap.","Séq."]],body,startY:20,
+      styles:{fontSize:7,cellPadding:1.35,overflow:'linebreak'},
+      headStyles:{fillColor:[201,58,58],textColor:[255,255,255],fontSize:7},
+      columnStyles:{0:{cellWidth:24},1:{cellWidth:22},2:{cellWidth:45,fontStyle:'bold'},3:{cellWidth:22},4:{cellWidth:132},5:{cellWidth:16,halign:'center'},6:{cellWidth:16,halign:'center'},7:{cellWidth:14,halign:'center'}},
+      margin:{left:8,right:8}
+    });
+    doc.save(`agents_ecartes_${fp()}.pdf`);
+  };
+
+  window.exportWorkloadPDF = function(){
+    if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+    const jsPDF=pdfJs(); if(!jsPDF) return;
+    let rows=[];
+    if(typeof buildPdfRowsFiltered==='function') rows=buildPdfRowsFiltered();
+    else if(typeof buildWorkloadExportRows==='function') rows=buildWorkloadExportRows().map(r=>({agent:r.Agent,matricule:r.Matricule,global:{label:r["Niveau charge"]},globalScore:r["Score charge"],fatigue:{label:r["Niveau fatigue"]},fatigueScore:r["Score fatigue"],stress:{label:r["Niveau stress"]},stressScore:r["Score stress"],workDays:r["Jours travaillés"],restDays:r.Repos,restDeficit:r["Déficit repos"],totalHours:r["Heures totales"],projectedHours28:r["Heures base 28 jours"],projectedRest28:r["Repos base 28 jours"],avgHours:r["Moyenne par jour"],maxSeq:r["Séquence max"],dispoDays:r.DISPO,advice:r.Lecture}));
+    const body=(rows.length?rows:[{agent:'Aucun agent dans le filtre'}]).map(m=>[
+      clean(m.agent,34), clean(m.matricule||'',14), clean(m.global?.label||'',16), m.globalScore??'', clean(m.fatigue?.label||'',16), m.fatigueScore??'', clean(m.stress?.label||'',16), m.stressScore??'', m.workDays??'', m.restDays??'', m.restDeficit??'', moneyNum(m.totalHours??''), moneyNum(m.projectedHours28??''), moneyNum(m.projectedRest28??''), moneyNum(m.avgHours??''), m.maxSeq??'', m.dispoDays??'', clean(m.advice,105)
+    ]);
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a3'});
+    const ds=$v12('pdfDateStart')?.selectedOptions?.[0]?.textContent||'Toutes'; const de=$v12('pdfDateEnd')?.selectedOptions?.[0]?.textContent||'Toutes';
+    title(doc,`Charge de travail - ${currentSheetName||'feuille analysée'}`,`Plage : ${ds} → ${de} - ${body.length} agent(s)`);
+    auto(doc,{head:[["Agent","Mat.","Charge","Score","Fatigue","Score","Stress","Score","Trav.","Repos","Déf.","Heures","Base 28j","Repos 28j","Moy./j","Séq.","DISPO","Lecture"]],body,startY:20,
+      styles:{fontSize:5.8,cellPadding:0.95,overflow:'linebreak'},
+      headStyles:{fillColor:[19,41,75],textColor:[255,255,255],fontSize:6},
+      columnStyles:{0:{cellWidth:42,fontStyle:'bold'},1:{cellWidth:18},2:{cellWidth:22},3:{cellWidth:14,halign:'center'},4:{cellWidth:22},5:{cellWidth:14,halign:'center'},6:{cellWidth:22},7:{cellWidth:14,halign:'center'},8:{cellWidth:13,halign:'center'},9:{cellWidth:13,halign:'center'},10:{cellWidth:12,halign:'center'},11:{cellWidth:16,halign:'right'},12:{cellWidth:17,halign:'right'},13:{cellWidth:16,halign:'right'},14:{cellWidth:14,halign:'right'},15:{cellWidth:12,halign:'center'},16:{cellWidth:14,halign:'center'},17:{cellWidth:105}},
+      margin:{left:6,right:6}
+    });
+    doc.save(`charge_de_travail_${fp()}.pdf`);
+  };
+
+  function planningChunks(size){
+    const chunks=[]; const dates=lastResult.dateCols||[];
+    for(let i=0;i<dates.length;i+=size) chunks.push({start:i,end:Math.min(i+size,dates.length)});
+    return chunks.length?chunks:[{start:0,end:0}];
+  }
+  window.exportPlanningPDF = function(){
+    if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+    const jsPDF=pdfJs(); if(!jsPDF) return;
+    const q = (typeof norm==='function'?norm(($v12('agentSearch')?.value||'')):String($v12('agentSearch')?.value||'').toUpperCase());
+    const agents=lastResult.agents.filter(a=>!q || norm(a.name).includes(q) || norm(a.matricule).includes(q));
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a3'});
+    const chunks=planningChunks(14);
+    chunks.forEach((ch,idx)=>{
+      if(idx>0) doc.addPage('a3','landscape');
+      const dateLabel = `${typeof fmtDate==='function'?fmtDate(lastResult.dateCols[ch.start]?.date):ch.start+1} → ${typeof fmtDate==='function'?fmtDate(lastResult.dateCols[ch.end-1]?.date):ch.end}`;
+      title(doc,`Planning - ${currentSheetName||'feuille analysée'}`,`Bloc ${idx+1}/${chunks.length} - Dates ${dateLabel} - ${agents.length} agent(s)`);
+      const head=[["Agent"].concat(lastResult.dateCols.slice(ch.start,ch.end).map(d=>fmtDate(d.date)))];
+      const body=agents.map(a=>[clean(a.name,36)].concat(a.days.slice(ch.start,ch.end).map(d=>{
+        const h=d.hours?`\n${d.hours.toFixed(1)}h`:''; return clean(`${d.code||''}${h}`,18);
+      })));
+      const colStyles={0:{cellWidth:55,halign:'left',fontStyle:'bold'}};
+      for(let c=1;c<=ch.end-ch.start;c++) colStyles[c]={cellWidth:24,halign:'center'};
+      auto(doc,{head,body,startY:20,
+        styles:{fontSize:6.3,cellPadding:1.0,overflow:'linebreak',halign:'center',valign:'middle'},
+        headStyles:{fillColor:[19,41,75],textColor:[255,255,255],fontSize:6.4},
+        columnStyles:colStyles,
+        margin:{left:7,right:7},
+        didParseCell:function(data){
+          if(data.section==='body' && data.column.index>0){
+            const txt=String(data.cell.raw||'').split('\n')[0].trim().toUpperCase();
+            const cls=typeof classify==='function'?classify(txt, parseList('restCodes'), parseList('absenceCodes')):'';
+            if(cls==='rest') data.cell.styles.fillColor=[232,247,236];
+            else if(cls==='absence') data.cell.styles.fillColor=[255,242,204];
+            else if(cls==='work') data.cell.styles.fillColor=[234,242,255];
+          }
+        }
+      });
+    });
+    doc.save(`planning_${fp()}.pdf`);
+  };
+
+  window.exportFullReportPDF = function(){
+    if(!lastResult){ alert("Charge d’abord un fichier Excel."); return; }
+    const jsPDF=pdfJs(); if(!jsPDF) return;
+    const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a3'});
+    title(doc,`Rapport complet - ${currentSheetName||'feuille analysée'}`,`Agents : ${lastResult.agents.length} | Dates : ${lastResult.dateCols.length} | Anomalies : ${lastResult.anomalies.length} | Solutions : ${lastResult.solutions.length}`);
+    auto(doc,{head:[["Indicateur","Valeur"]],body:[["Agents détectés",lastResult.agents.length],["Dates détectées",lastResult.dateCols.length],["Services TAS non couverts",lastResult.uncoveredServices.length],["Solutions possibles",lastResult.solutions.length],["Anomalies totales",lastResult.anomalies.length]],startY:20,columnStyles:{0:{cellWidth:80,fontStyle:'bold'},1:{cellWidth:40}},margin:{left:10,right:10}});
+    auto(doc,{head:[["Anomalie","Agent","Date","Détail"]],body:(lastResult.anomalies.length?lastResult.anomalies:[{type:'Aucune anomalie',agent:'',date:'',detail:''}]).slice(0,120).map(a=>[clean(a.type,42),clean(a.agent,34),clean(a.date,22),clean(a.detail,145)]),startY:doc.lastAutoTable.finalY+8,headStyles:{fillColor:[201,58,58],textColor:[255,255,255]},columnStyles:{0:{cellWidth:54,fontStyle:'bold'},1:{cellWidth:45},2:{cellWidth:30},3:{cellWidth:245}},margin:{left:10,right:10}});
+    doc.addPage('a3','landscape');
+    title(doc,'Solutions possibles',`${Math.min(lastResult.solutions.length,120)} ligne(s) affichée(s)`);
+    auto(doc,{head:[["Score","Risque","Date","Agent","Repos ap.","Séq.","Proposition"]],body:(lastResult.solutions.length?lastResult.solutions:[{score:0,risk:'',date:'Aucune solution',agent:'',reposApres:'',sequenceMaxApres:'',detail:''}]).slice(0,120).map(s=>[Math.round(s.score||0),clean(s.risk,18),clean(s.date,24),clean(s.agent,38),s.reposApres??'',s.sequenceMaxApres??'',clean(s.detail,170)]),startY:20,columnStyles:{0:{cellWidth:18,halign:'center'},1:{cellWidth:28},2:{cellWidth:34},3:{cellWidth:55,fontStyle:'bold'},4:{cellWidth:22,halign:'center'},5:{cellWidth:18,halign:'center'},6:{cellWidth:230}},margin:{left:8,right:8}});
+    doc.addPage('a3','landscape');
+    title(doc,'Synthèse agents',`${lastResult.agentStats.length} agent(s)`);
+    auto(doc,{head:[["Agent","Matricule","Trav.","Repos","Abs.","Temps total","Séq. max"]],body:lastResult.agentStats.map(a=>[clean(a.name,42),clean(a.matricule,18),a.workDays,a.rest,a.absence,`${a.totalHours.toFixed(2)} h`,a.maxSeq]),startY:20,columnStyles:{0:{cellWidth:80,fontStyle:'bold'},1:{cellWidth:30},2:{cellWidth:22,halign:'center'},3:{cellWidth:22,halign:'center'},4:{cellWidth:22,halign:'center'},5:{cellWidth:32,halign:'right'},6:{cellWidth:25,halign:'center'}},margin:{left:10,right:10}});
+    doc.save(`rapport_complet_${fp()}.pdf`);
+  };
+
+  function rebind(id, fn){
+    const b=$v12(id); if(!b) return;
+    const c=b.cloneNode(true); b.replaceWith(c); c.addEventListener('click', fn);
+  }
+  rebind('exportAgentsPdfBtn', ()=>window.exportAgentsPDF());
+  rebind('exportAnomaliesPdfBtn', ()=>window.exportAnomaliesPDF());
+  rebind('exportSolutionsPdfBtn', ()=>window.exportSolutionsPDF());
+  rebind('exportRejectedPdfBtn', ()=>window.exportRejectedPDF());
+  rebind('exportWorkloadPdfBtn', ()=>window.exportWorkloadPDF());
+  rebind('exportPlanningPdfBtn', ()=>window.exportPlanningPDF());
+  rebind('exportFullReportPdfBtn', ()=>window.exportFullReportPDF());
+})();
+</script>
+
+
+
+
+<script>
+(function(){
+  const warningSoftStart = new Date("2026-12-20T00:00:00");
+  const warningStrongStart = new Date("2026-12-26T00:00:00");
+  const expirationDate = new Date("2027-01-01T00:00:00");
+  const now = new Date();
+
+  function daysLeft(){
+    return Math.max(0, Math.ceil((expirationDate.getTime() - new Date().getTime()) / 86400000));
+  }
+
+  function blockEverything(){
+    document.documentElement.innerHTML = `
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Accès révoqué</title>
+        <style>${document.querySelector('style') ? document.querySelector('style').innerHTML : ''}</style>
+      </head>
+      <body>
+        <div class="gc-license-expired">
+          <div class="gc-license-expired-card">
+            <div class="gc-icon">⛔</div>
+            <h1>Accès révoqué</h1>
+            <p>Ce logiciel n’est plus utilisable depuis le 1er janvier 2027.</p>
+            <p>Pour continuer à utiliser le logiciel, merci de contacter son propriétaire.</p>
+          </div>
+        </div>
+      </body>
+    `;
+    try { localStorage.clear(); sessionStorage.clear(); } catch(e) {}
+    const prevent = function(e){ e.preventDefault(); e.stopImmediatePropagation(); return false; };
+    ["click","input","change","submit","keydown","keyup","touchstart","touchend","drop","dragover"].forEach(evt => {
+      window.addEventListener(evt, prevent, true);
+      document.addEventListener(evt, prevent, true);
+    });
+  }
+
+  function showSoftBanner(){
+    const banner = document.createElement("div");
+    banner.className = "gc-license-banner show";
+    banner.innerHTML = `<strong>Information :</strong> vos droits d’utilisation seront révoqués le 1er janvier 2027. Pour continuer à utiliser le logiciel, merci de contacter son propriétaire.`;
+    document.body.insertBefore(banner, document.body.firstChild);
+  }
+
+  function showStrongModal(){
+    const backdrop = document.createElement("div");
+    backdrop.className = "gc-license-modal-backdrop show";
+    backdrop.innerHTML = `
+      <div class="gc-license-modal" role="dialog" aria-modal="true" aria-labelledby="gcLicenseTitle">
+        <div class="gc-license-modal-head">
+          <div class="gc-icon">⚠️</div>
+          <h2 id="gcLicenseTitle">Révocation prochaine des droits d’utilisation</h2>
+        </div>
+        <div class="gc-license-modal-body">
+          <p>Vos droits d’utilisation seront révoqués le 1er janvier 2027.</p>
+          <p>Pour continuer à utiliser le logiciel après cette date, merci de contacter son propriétaire.</p>
+          <div class="gc-license-countdown">
+            <div><b id="gcDaysLeft">${daysLeft()}</b><span>jour(s) restant(s)</span></div>
+            <div><b>01</b><span>janvier</span></div>
+            <div><b>2027</b><span>échéance</span></div>
+          </div>
+          <p style="font-size:12px;color:var(--muted,#687386)">Le logiciel reste utilisable jusqu’à la date de révocation.</p>
+        </div>
+        <div class="gc-license-actions">
+          <button type="button" id="gcLicenseClose">J’ai compris</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+    const close = document.getElementById("gcLicenseClose");
+    if(close) close.addEventListener("click", () => backdrop.remove());
+  }
+
+  document.addEventListener("DOMContentLoaded", function(){
+    if(now >= expirationDate){
+      blockEverything();
+      return;
+    }
+    if(now >= warningStrongStart){
+      showStrongModal();
+      return;
+    }
+    if(now >= warningSoftStart){
+      showSoftBanner();
+    }
+  });
+
+  if(now >= expirationDate){
+    document.addEventListener("DOMContentLoaded", blockEverything);
+    throw new Error("Accès révoqué : logiciel expiré.");
+  }
+})();
+</script>
+
+<script>
+/* ===== CORRECTIF V03.13 : restauration clic agent + résumé drawer ===== */
+(function(){
+  const $fix = (id)=>document.getElementById(id);
+  const normFix = (v)=>String(v ?? '').trim().toUpperCase();
+  const textFix = (html)=>{const d=document.createElement('div'); d.innerHTML=String(html ?? ''); return (d.textContent||d.innerText||'').trim();};
+  function fmtFix(d){try{return d ? d.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}) : '';}catch(e){return '';}}
+  function longestFix(days){
+    let best=0, cur=0;
+    (days||[]).forEach(d=>{ if(d.type==='work'){cur++; best=Math.max(best,cur);} else cur=0; });
+    return best;
+  }
+  function getResultFix(){ try{return lastResult || null;}catch(e){return null;} }
+  function getAgentNameFromRow(tr){
+    if(!tr || !tr.cells || !tr.cells.length) return '';
+    let txt=textFix(tr.cells[0].innerHTML || tr.cells[0].textContent || '');
+    txt=txt.split('\n')[0].trim();
+    return txt;
+  }
+  function findAgentFix(name){
+    const r=getResultFix(); if(!r || !name) return null;
+    const n=normFix(name);
+    return (r.agents||[]).find(a=>normFix(a.name)===n) || (r.agents||[]).find(a=>normFix(a.name).includes(n) || n.includes(normFix(a.name)));
+  }
+  function agentStatsFix(r, agent){
+    const existing=(r.agentStats||[]).find(s=>s.name===agent.name);
+    if(existing) return existing;
+    const days=agent.days||[];
+    const workDays=days.filter(d=>d.type==='work').length;
+    const rest=days.filter(d=>d.type==='rest').length;
+    const absence=days.filter(d=>d.type==='absence').length;
+    const empty=days.filter(d=>d.type==='empty').length;
+    const totalHours=days.reduce((s,d)=>s+(Number(d.hours)||0),0);
+    return {name:agent.name,matricule:agent.matricule,workDays,work:workDays,rest,absence,empty,totalHours,avgHours:workDays?totalHours/workDays:0,maxSeq:longestFix(days)};
+  }
+  function bar(label,value,max){
+    const pct=Math.max(0,Math.min(100,Math.round((Number(value)||0)/(max||100)*100)));
+    return `<div class="agentBarRow"><span>${label}</span><div class="agentBarTrack"><span class="agentBarFill" style="width:${pct}%"></span></div><strong>${value}</strong></div>`;
+  }
+  function openDrawerFix(agent){
+    const r=getResultFix(); if(!agent || !r) return;
+    const stats=agentStatsFix(r,agent);
+    const anomalies=(r.anomalies||[]).filter(a=>a.agent===agent.name);
+    const linked=['300','301','400','401','600','601'];
+    const agents=(r.agents||[]).filter(Boolean);
+    const index=Math.max(0,agents.findIndex(a=>a.name===agent.name));
+    const totalDays=(agent.days||[]).length || 1;
+    const timeline=(agent.days||[]).map(d=>{
+      const n=normFix(d.code); const cls=linked.includes(n)?'pair':(d.type||'empty');
+      return `<span class="agentDayDot ${cls}" title="${fmtFix(d.date)} : ${d.code||'vide'}${d.hours?' - '+Number(d.hours).toFixed(2)+' h':''}"></span>`;
+    }).join('');
+    const metrics = (typeof workloadMetricsFor==='function') ? workloadMetricsFor(agent,stats) : null;
+    const fatigue = metrics ? `<div class="fatigueGaugeCard"><div class="fatigueCircle" style="background:conic-gradient(#20845a 0deg,#ffb703 ${Math.round(metrics.fatigueScore*2.1)}deg,#d94b4b ${Math.round(metrics.fatigueScore*3.2)}deg,#e7edf5 ${Math.round(metrics.fatigueScore*3.6)}deg 360deg)"><div class="fatigueValue">${metrics.fatigueScore}<span>fatigue</span></div></div><p><span class="fatigueLevel ${metrics.fatigue.cls}">${metrics.fatigue.label}</span></p></div>` : '';
+    const heatmap=(agent.days||[]).map(d=>{
+      let cls='hmEmpty';
+      if(d.type==='rest') cls='hmRest'; else if(d.type==='absence') cls='hmAbs'; else if(d.type==='work'){
+        const h=Number(d.hours)||0; cls=h>=9?'hmWork5':h>=8?'hmWork4':h>=7?'hmWork3':h>0?'hmWork2':'hmWork1';
+      }
+      const pair=linked.includes(normFix(d.code))?' hmPair':'';
+      return `<div class="hmCell ${cls}${pair}" title="${fmtFix(d.date)} : ${d.code||'vide'}${d.hours?' - '+Number(d.hours).toFixed(2)+' h':''}"><span>${fmtFix(d.date)}</span><strong>${d.code||''}</strong></div>`;
+    }).join('');
+    const advice = metrics ? `<h3>Lecture rapide</h3><p class="small">${metrics.advice || ''}</p>` : '';
+    const content=`
+      <div class="drawerNav"><button type="button" class="secondary" id="drawerPrevAgent">← Agent précédent</button><button type="button" class="secondary" id="drawerNextAgent">Agent suivant →</button></div>
+      <div class="agentVisualHeader"><div><h2>${agent.name}</h2><p class="small">${agent.matricule?'Matricule : '+agent.matricule:'Matricule non détecté'}</p></div></div>
+      <div class="agentVisualGrid">
+        ${fatigue}
+        <div class="agentBarsCard">
+          ${bar('Jours travaillés',stats.workDays ?? stats.work ?? 0,totalDays)}
+          ${bar('Repos',stats.rest ?? 0,totalDays)}
+          ${bar('Absences',stats.absence ?? 0,totalDays)}
+          ${bar('Séquence max',stats.maxSeq ?? longestFix(agent.days),10)}
+        </div>
+      </div>
+      <div class="agentMetric"><span>Temps total</span><strong>${stats.totalHours?Number(stats.totalHours).toFixed(2)+' h':'0 h'}</strong></div>
+      <div class="agentMetric"><span>Moyenne par journée travaillée</span><strong>${stats.avgHours?Number(stats.avgHours).toFixed(2)+' h':'0 h'}</strong></div>
+      <div class="agentMetric"><span>Anomalies agent</span><strong>${anomalies.length}</strong></div>
+      ${advice}
+      <h3>Chronologie</h3><div class="agentTimeline">${timeline}</div>
+      <h3>Heatmap agent</h3><div class="agentHeatmap">${heatmap}</div>
+      <h3>Points à vérifier</h3><p class="small">${anomalies.length?anomalies.map(a=>`• ${a.date||''} — ${textFix(a.type)} : ${textFix(a.detail)}`).join('<br>'):'Aucune anomalie détectée pour cet agent.'}</p>`;
+    const cont=$fix('agentDrawerContent'); const drawer=$fix('agentDrawer');
+    if(cont) cont.innerHTML=content;
+    if(drawer) drawer.classList.add('open');
+    $fix('drawerPrevAgent')?.addEventListener('click',()=>openDrawerFix(agents[(index-1+agents.length)%agents.length]));
+    $fix('drawerNextAgent')?.addEventListener('click',()=>openDrawerFix(agents[(index+1)%agents.length]));
+    setTimeout(()=>{document.querySelectorAll('#agentDrawer .agentBarFill').forEach(el=>{const w=el.style.width;el.style.width='0%';requestAnimationFrame(()=>{el.style.width=w;});});},20);
+  }
+  window.openAgentDrawerEnhanced=openDrawerFix;
+  window.openAgentDrawer=openDrawerFix;
+
+  function markRowsClickable(){
+    ['agentsTable','planningTable','workloadTable'].forEach(id=>{
+      document.querySelectorAll(`#${id} tbody tr`).forEach(tr=>tr.classList.add('agentClickable'));
+    });
+  }
+  document.addEventListener('click',function(e){
+    const tr=e.target.closest('#agentsTable tbody tr,#planningTable tbody tr,#workloadTable tbody tr');
+    if(!tr) return;
+    const ag=findAgentFix(getAgentNameFromRow(tr));
+    if(ag){ e.preventDefault(); e.stopPropagation(); openDrawerFix(ag); }
+  },true);
+  $fix('agentDrawerClose')?.addEventListener('click',()=> $fix('agentDrawer')?.classList.remove('open'));
+
+  const oldRenderAllFix=window.renderAll;
+  if(typeof oldRenderAllFix==='function'){
+    window.renderAll=function(){
+      oldRenderAllFix();
+      setTimeout(markRowsClickable,80);
+    };
+  }
+  const oldTableFix=window.table;
+  if(typeof oldTableFix==='function'){
+    window.table=function(id,headers,rows){
+      oldTableFix(id,headers,rows);
+      if(['agentsTable','planningTable','workloadTable'].includes(id)) setTimeout(markRowsClickable,20);
+    };
+  }
+  setTimeout(markRowsClickable,150);
+})();
+</script>
+
+</body>
+</html>
