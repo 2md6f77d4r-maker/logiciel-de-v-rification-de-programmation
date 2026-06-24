@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Analyse planning Excel</title>
+<title>Analyse planning Excel - Futuriste Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
@@ -235,11 +236,212 @@ body.dark .gc-license-countdown b{color:#88bdf2;}
 .gc-license-expired-card p{margin:10px 0;color:#dce8f7;line-height:1.5;}
 @media(max-width:700px){.gc-license-countdown{grid-template-columns:1fr}.gc-license-actions{flex-direction:column}.gc-license-actions button{width:100%}}
 
+
+/* ===== ERGONOMIE V03.18 Futuriste Pro - ACCUEIL SIMPLE ET AIDE CONTEXTUELLE ===== */
+.quickStart{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;align-items:stretch}
+.quickHero{border:1px solid var(--line);border-radius:22px;background:linear-gradient(135deg,#ffffff,#eef6ff);padding:18px;position:relative;overflow:hidden}
+.quickHero::after{content:"";position:absolute;right:-40px;top:-40px;width:170px;height:170px;border-radius:50%;background:rgba(255,183,3,.20)}
+.quickHero h2{margin:0 0 8px;color:#27496d;font-size:24px}.quickHero p{margin:0;color:var(--muted);line-height:1.45}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}.step{border:1px solid var(--line);background:#fff;border-radius:18px;padding:13px}.step b{display:block;color:#243b5a;margin-bottom:4px}.step span{font-size:12px;color:var(--muted);line-height:1.35}
+.importCard{border:1px solid var(--line);border-radius:22px;background:var(--card);padding:18px;display:flex;flex-direction:column;justify-content:center}.importCard input{padding:14px;background:#fbfdff}.importHint{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.35}
+.advancedToggle{margin-top:14px;width:auto;background:#eef4fb;color:#243b5a;border:1px solid #c9d6e6}.advancedBox{display:none;margin-top:14px;border-top:1px dashed var(--line);padding-top:14px}.advancedBox.open{display:block}.summaryPanel{display:none}.summaryPanel.show{display:block}.summaryGrid{display:grid;grid-template-columns:repeat(5,minmax(140px,1fr));gap:10px}.summaryItem{border:1px solid var(--line);border-radius:16px;background:#fbfdff;padding:12px}.summaryItem .label{font-size:11px;color:var(--muted);text-transform:uppercase;font-weight:800;letter-spacing:.04em}.summaryItem .value{margin-top:7px;font-size:22px;font-weight:900;color:#27496d}.globalState{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 12px;font-weight:900}.globalOk{background:#daf5e8;color:#12623a}.globalWarn{background:#fff0c9;color:#845600}.globalCritical{background:#ffe2e2;color:#9b1c1c}.priorityCritical{background:#ffe2e2;color:#9b1c1c}.priorityImportant{background:#fff0c9;color:#845600}.priorityCheck{background:#e6f1ff;color:#1d4d84}.quickActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}.quickActions button{width:auto}.contextHelp{display:inline-grid;place-items:center;margin-left:5px;width:18px;height:18px;border-radius:50%;background:#eaf3ff;color:#1d4d84;font-size:12px;font-weight:900;cursor:help;border:1px solid var(--line)}
+.exportGuide{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fbfdff;margin-bottom:14px}.exportGuide h3{margin:0 0 8px;color:#27496d}.exportGuideBtns{display:flex;flex-wrap:wrap;gap:8px}.exportGuideBtns button{width:auto;padding:9px 12px}.simpleMode .charts,.simpleMode #kpis{display:none}.simpleMode .tabs .tab[data-view="workload"],.simpleMode .tabs .tab[data-view="calendar"],.simpleMode .tabs .tab[data-view="method"]{display:none}
+body.dark .quickHero,body.dark .importCard,body.dark .step,body.dark .summaryItem,body.dark .exportGuide{background:#172131}body.dark .quickHero h2,body.dark .summaryItem .value,body.dark .exportGuide h3{color:#88bdf2}body.dark .step b{color:#e7eefb}body.dark .advancedToggle{background:#243247;color:#e7eefb;border-color:#3a4a63}
+@media(max-width:900px){.quickStart{grid-template-columns:1fr}.steps,.summaryGrid{grid-template-columns:1fr}.quickActions button,.exportGuideBtns button{width:100%}}
+
+
+
+
+/* ===== V03.19 FUTURISTE PRO - vrai mode jour par défaut + vrai mode nuit ===== */
+:root{
+  --bg:#eef7ff;
+  --card:rgba(255,255,255,.88);
+  --ink:#122033;
+  --muted:#5d7188;
+  --line:rgba(24,111,184,.20);
+  --rail:#1467b3;
+  --rail2:#00a8df;
+  --accent:#00b8ff;
+  --danger:#d93b5c;
+  --ok:#16875a;
+  --warn:#b87900;
+  --soft:rgba(244,250,255,.88);
+  --blueSoft:rgba(0,184,255,.10);
+  --shadow:0 18px 42px rgba(27,83,142,.13),0 0 0 1px rgba(255,255,255,.70) inset;
+  --service:#dff3ff;
+  --rest:#e3f8ee;
+  --absence:#fff4d5;
+  --empty:#ffffff;
+  --pair:#efe9ff;
+  --error:#ffe1e9;
+  --heat1:#e5f8ef;
+  --heat2:#fff2c8;
+  --heat3:#ffe1ba;
+  --heat4:#ffd7df;
+}
+body{
+  background:
+    radial-gradient(circle at 11% 0%,rgba(0,184,255,.24),transparent 29%),
+    radial-gradient(circle at 92% 8%,rgba(124,92,255,.15),transparent 26%),
+    linear-gradient(180deg,#f8fcff 0%,#eef7ff 48%,#eaf2fb 100%) !important;
+  color:var(--ink) !important;
+}
+body.dark{
+  --bg:#050b16;
+  --card:rgba(10,22,39,.92);
+  --ink:#eaf6ff;
+  --muted:#9bb1ca;
+  --line:rgba(92,207,255,.24);
+  --rail:#66d8ff;
+  --rail2:#8c74ff;
+  --accent:#00f0ff;
+  --danger:#ff5b88;
+  --ok:#47f0a7;
+  --warn:#ffd166;
+  --soft:rgba(7,16,30,.88);
+  --blueSoft:rgba(0,240,255,.10);
+  --shadow:0 24px 70px rgba(0,0,0,.44),0 0 0 1px rgba(0,240,255,.07) inset;
+  --service:rgba(0,169,255,.23);
+  --rest:rgba(65,240,160,.19);
+  --absence:rgba(255,209,102,.22);
+  --empty:rgba(255,255,255,.04);
+  --pair:rgba(124,92,255,.24);
+  --error:rgba(255,77,125,.22);
+  --heat1:rgba(65,240,160,.18);
+  --heat2:rgba(255,209,102,.20);
+  --heat3:rgba(255,150,70,.22);
+  --heat4:rgba(255,77,125,.24);
+  background:
+    radial-gradient(circle at 12% 0%,rgba(0,240,255,.22),transparent 28%),
+    radial-gradient(circle at 86% 12%,rgba(124,92,255,.20),transparent 26%),
+    linear-gradient(180deg,#050b16 0%,#081426 48%,#050b16 100%) !important;
+  color:var(--ink) !important;
+}
+body::before{
+  content:"";
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:-1;
+  background-image:
+    linear-gradient(rgba(20,103,179,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(20,103,179,.055) 1px,transparent 1px);
+  background-size:46px 46px;
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.62),transparent 92%);
+}
+body.dark::before{
+  background-image:
+    linear-gradient(rgba(0,240,255,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,240,255,.055) 1px,transparent 1px);
+  mask-image:linear-gradient(180deg,rgba(0,0,0,.86),transparent 92%);
+}
+header{
+  background:linear-gradient(135deg,#ffffff 0%,#eaf7ff 45%,#dcecff 100%) !important;
+  color:#10223a !important;
+  border-bottom:1px solid rgba(0,153,219,.40) !important;
+  box-shadow:0 14px 40px rgba(33,99,160,.13),0 0 0 1px rgba(255,255,255,.80) inset !important;
+}
+body.dark header{
+  background:linear-gradient(135deg,rgba(8,18,35,.97),rgba(15,45,76,.95) 55%,rgba(24,18,62,.92)) !important;
+  color:white !important;
+  border-bottom:1px solid rgba(0,240,255,.55) !important;
+  box-shadow:0 18px 55px rgba(0,0,0,.38),0 0 32px rgba(0,240,255,.12) !important;
+}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,#00b8ff,#1467b3,transparent)}
+body.dark header::after{background:linear-gradient(90deg,transparent,#00f0ff,#7c5cff,transparent)}
+header h1{letter-spacing:.02em;text-shadow:none;color:inherit !important}
+body.dark header h1{text-shadow:0 0 18px rgba(0,240,255,.24)}
+header p{color:#506985 !important}
+body.dark header p{color:#b9d7f4 !important}
+.panel,.gc-license-modal,.agentDrawer{
+  background:linear-gradient(180deg,rgba(255,255,255,.90),rgba(248,252,255,.84)) !important;
+  border:1px solid var(--line) !important;
+  box-shadow:var(--shadow) !important;
+  backdrop-filter:blur(14px);
+}
+body.dark .panel,body.dark .gc-license-modal,body.dark .agentDrawer{
+  background:linear-gradient(180deg,rgba(14,29,50,.90),rgba(8,18,32,.84)) !important;
+}
+.gc-control-panel{position:relative;overflow:hidden}
+.gc-control-panel::before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,rgba(0,184,255,.10),transparent 24%,transparent 70%,rgba(124,92,255,.08))}
+body.dark .gc-control-panel::before{background:linear-gradient(120deg,rgba(0,240,255,.12),transparent 24%,transparent 70%,rgba(124,92,255,.12))}
+.gc-panel-titlebar{position:relative;display:flex;justify-content:space-between;gap:14px;align-items:flex-start;margin-bottom:14px}
+.gc-panel-titlebar h2{margin:0 0 6px;color:#123b63;font-size:20px;letter-spacing:.02em}
+body.dark .gc-panel-titlebar h2{color:#eaf6ff}
+.gc-status-chip{border:1px solid rgba(0,153,219,.28);background:rgba(0,184,255,.10);color:#0e5e8d;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;white-space:nowrap;box-shadow:0 8px 22px rgba(0,153,219,.08)}
+body.dark .gc-status-chip{border-color:rgba(0,240,255,.38);background:rgba(0,240,255,.10);color:#9ff8ff;box-shadow:0 0 22px rgba(0,240,255,.10)}
+label{color:#506985 !important;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+body.dark label{color:#9eb8d6 !important}
+input,select{
+  background:rgba(255,255,255,.96) !important;
+  color:#122033 !important;
+  border:1px solid rgba(24,111,184,.22) !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 8px 20px rgba(27,83,142,.05);
+}
+body.dark input,body.dark select{
+  background:rgba(4,12,24,.78) !important;
+  color:#eaf6ff !important;
+  border:1px solid rgba(105,196,255,.24) !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.025),0 0 18px rgba(0,240,255,.03);
+}
+input:focus,select:focus{outline:3px solid rgba(0,184,255,.18) !important;border-color:rgba(0,153,219,.58) !important}
+body.dark input:focus,body.dark select:focus{outline-color:rgba(0,240,255,.17) !important;border-color:rgba(0,240,255,.68) !important}
+button{background:linear-gradient(135deg,#1467b3,#00b8ff) !important;color:#ffffff !important;border:1px solid rgba(255,255,255,.55) !important;box-shadow:0 10px 26px rgba(0,120,210,.18), inset 0 1px 0 rgba(255,255,255,.34) !important;font-weight:900}
+body.dark button{background:linear-gradient(135deg,#0077ff,#00d5ff) !important;color:#03111f !important;border:1px solid rgba(163,245,255,.36) !important;box-shadow:0 10px 26px rgba(0,161,255,.18), inset 0 1px 0 rgba(255,255,255,.22) !important}
+button:hover{filter:brightness(1.06);box-shadow:0 14px 30px rgba(0,120,210,.22),0 0 16px rgba(0,184,255,.10) !important}
+body.dark button:hover{box-shadow:0 14px 30px rgba(0,213,255,.24),0 0 20px rgba(0,240,255,.12) !important}
+button.secondary{background:linear-gradient(135deg,#ffffff,#e8f4ff) !important;color:#1467b3 !important;border-color:rgba(24,111,184,.23) !important}
+body.dark button.secondary{background:linear-gradient(135deg,rgba(22,39,67,.96),rgba(33,58,92,.96)) !important;color:#cfefff !important;border-color:rgba(105,196,255,.28) !important}
+button.export{background:linear-gradient(135deg,#16875a,#29c990) !important;color:#ffffff !important}
+body.dark button.export{background:linear-gradient(135deg,#0fcf8a,#35ffc2) !important;color:#03170f !important}
+button.pdf{background:linear-gradient(135deg,#d93b5c,#ff6d46) !important;color:#fff !important}
+body.dark button.pdf{background:linear-gradient(135deg,#ff3f7f,#ff7a59) !important;color:#fff !important}
+.gc-mini-action{margin-top:7px;font-size:12px;padding:8px 9px}
+.tabs{background:rgba(255,255,255,.66) !important;border:1px solid rgba(24,111,184,.16) !important;box-shadow:inset 0 0 22px rgba(0,184,255,.035)}
+body.dark .tabs{background:rgba(4,12,24,.62) !important;border-color:rgba(105,196,255,.18) !important;box-shadow:inset 0 0 22px rgba(0,240,255,.035)}
+.tab{background:rgba(255,255,255,.84) !important;color:#1467b3 !important;border:1px solid rgba(24,111,184,.16) !important}
+body.dark .tab{background:rgba(12,28,49,.88) !important;color:#b9dcff !important;border-color:rgba(105,196,255,.16) !important}
+.tab.active{background:linear-gradient(135deg,#1467b3,#00b8ff) !important;color:#fff !important;box-shadow:0 10px 22px rgba(0,153,219,.18) !important}
+body.dark .tab.active{background:linear-gradient(135deg,#00d5ff,#7c5cff) !important;color:#04101f !important;box-shadow:0 0 18px rgba(0,240,255,.20) !important}
+.kpi{background:linear-gradient(180deg,rgba(255,255,255,.94),rgba(244,250,255,.92)) !important;border:1px solid rgba(24,111,184,.18) !important;box-shadow:0 14px 32px rgba(27,83,142,.10),0 0 0 1px rgba(255,255,255,.72) inset !important}
+body.dark .kpi{background:linear-gradient(180deg,rgba(13,29,50,.92),rgba(8,19,34,.9)) !important;border-color:rgba(105,196,255,.24) !important;box-shadow:0 14px 35px rgba(0,0,0,.20),0 0 18px rgba(0,240,255,.06) !important}
+.kpi .label{color:#617a93 !important}.kpi .value{color:#1467b3 !important;text-shadow:none}
+body.dark .kpi .label{color:#8aa8c7 !important}body.dark .kpi .value{color:#72dcff !important;text-shadow:0 0 16px rgba(0,240,255,.20)}
+.tablewrap{background:rgba(255,255,255,.82) !important;border:1px solid rgba(24,111,184,.18) !important;box-shadow:inset 0 0 35px rgba(0,184,255,.02)}
+body.dark .tablewrap{background:rgba(5,13,25,.72) !important;border-color:rgba(105,196,255,.22) !important;box-shadow:inset 0 0 35px rgba(0,240,255,.025)}
+table{background:rgba(255,255,255,.95) !important;color:#122033 !important}
+body.dark table{background:rgba(5,13,25,.86) !important;color:#eaf6ff !important}
+th{background:linear-gradient(180deg,#eaf6ff,#d9ecfb) !important;color:#0f548b !important;border-color:rgba(24,111,184,.17) !important;text-transform:uppercase;font-size:11px;letter-spacing:.04em}
+body.dark th{background:linear-gradient(180deg,rgba(18,47,78,.98),rgba(11,28,49,.98)) !important;color:#9ff8ff !important;border-color:rgba(105,196,255,.22) !important}
+td{background:rgba(255,255,255,.94) !important;border-color:rgba(24,111,184,.11) !important;color:#122033 !important}
+body.dark td{background:rgba(7,17,31,.88) !important;border-color:rgba(105,196,255,.14) !important;color:#eaf6ff !important}
+tr:nth-child(even) td{background:rgba(244,250,255,.94) !important}
+body.dark tr:nth-child(even) td{background:rgba(10,24,43,.88) !important}
+td:first-child,th:first-child{background:rgba(235,247,255,.98) !important;color:#10223a !important}
+body.dark td:first-child,body.dark th:first-child{background:rgba(9,24,43,.98) !important;color:#eaf6ff !important}
+.badge,.score,.heatBadge{box-shadow:0 0 18px rgba(255,255,255,.05)}
+.charts .panel{min-height:340px}
+canvas{filter:drop-shadow(0 0 10px rgba(0,184,255,.05))}
+body.dark canvas{filter:drop-shadow(0 0 14px rgba(0,240,255,.06))}
+.small{color:#5d7188 !important}
+body.dark .small{color:#91a9c4 !important}
+.legendItem,.smartPill,.qualityItem,.calendarDay,.helpCard,.summaryItem,.exportGuide,.fatigueGaugeCard,.workloadMapCard,.agentBarsCard,.solutionCard{background:rgba(255,255,255,.82) !important;border:1px solid rgba(24,111,184,.15) !important;color:#122033 !important}
+body.dark .legendItem,body.dark .smartPill,body.dark .qualityItem,body.dark .calendarDay,body.dark .helpCard,body.dark .summaryItem,body.dark .exportGuide,body.dark .fatigueGaugeCard,body.dark .workloadMapCard,body.dark .agentBarsCard,body.dark .solutionCard{background:rgba(8,18,32,.76) !important;border-color:rgba(105,196,255,.18) !important;color:#eaf6ff !important}
+.cellService{background:#dff3ff!important;color:#104c78!important}.cellRest{background:#e3f8ee!important;color:#12623a!important}.cellAbsence{background:#fff4d5!important;color:#775100!important}.cellEmpty{background:#fff!important;color:#8b99a8!important}.cellPair{background:#efe9ff!important;color:#50308d!important}
+body.dark .cellService{background:rgba(0,169,255,.24)!important;color:#bdeeff!important}body.dark .cellRest{background:rgba(65,240,160,.20)!important;color:#c9ffe7!important}body.dark .cellAbsence{background:rgba(255,209,102,.22)!important;color:#ffe7a6!important}body.dark .cellEmpty{background:rgba(255,255,255,.035)!important;color:#7f94aa!important}body.dark .cellPair{background:rgba(124,92,255,.26)!important;color:#ded5ff!important}
+.floatingTools button{color:#ffffff !important}body.dark .floatingTools button{color:#03111f !important}
+#parseSkeleton{background:rgba(255,255,255,.82) !important;border-color:rgba(24,111,184,.16) !important}
+body.dark #parseSkeleton{background:rgba(8,18,32,.82) !important;border-color:rgba(105,196,255,.20) !important}
+.skeletonLine{background:linear-gradient(90deg,rgba(0,184,255,.08),rgba(255,255,255,.70),rgba(124,92,255,.08)) !important;background-size:220% 100% !important}
+body.dark .skeletonLine{background:linear-gradient(90deg,rgba(0,240,255,.08),rgba(255,255,255,.14),rgba(124,92,255,.10)) !important;background-size:220% 100% !important}
+::-webkit-scrollbar{width:11px;height:11px}::-webkit-scrollbar-track{background:#eaf2fb}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#00b8ff,#1467b3);border-radius:999px;border:3px solid #eaf2fb}
+body.dark::-webkit-scrollbar-track{background:#07111f}body.dark::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#00d5ff,#7c5cff);border:3px solid #07111f}
+@media(max-width:1100px){.gc-panel-titlebar{flex-direction:column}.gc-status-chip{white-space:normal}}
+
 </style>
 </head>
 <body>
 <header style="position:relative;">
-<div style="position:absolute;top:6px;left:10px;font-size:11px;color:#ffffff;opacity:0.8;">V03.16</div>
+<div style="position:absolute;top:6px;left:10px;font-size:11px;color:#ffffff;opacity:0.8;">V03.17</div>
   <div class="headerbar">
     <div>
       <h1 data-i18n="appTitle">Aide dans l’analyse de la programmation</h1>
@@ -258,7 +460,15 @@ body.dark .gc-license-countdown b{color:#88bdf2;}
 <div id="agentDrawer" class="agentDrawer"><button id="agentDrawerClose" class="agentDrawerClose secondary" type="button">Fermer</button><div id="agentDrawerContent"></div></div>
 <div class="floatingTools"><button id="scrollTopBtn" title="Remonter" type="button">↑</button><button id="scrollPlanningBtn" title="Planning" type="button">▦</button></div>
 
-  <section class="panel">
+  <section class="panel gc-futur-panel gc-control-panel">
+    <div class="gc-panel-titlebar">
+      <div>
+        <h2>Paramètres d’analyse</h2>
+        <p class="small" id="status">Importe ton fichier Excel pour lancer l’analyse.</p>
+      </div>
+      <div class="gc-status-chip">Configuration directe</div>
+    </div>
+
     <div class="controls">
       <div>
         <label>Fichier Excel</label>
@@ -285,6 +495,7 @@ body.dark .gc-license-countdown b{color:#88bdf2;}
         <input id="minRestAgent" type="number" value="8" min="0">
       </div>
     </div>
+
     <div class="controls" style="margin-top:10px;grid-template-columns:repeat(5,minmax(150px,1fr))">
       <div>
         <label>Mode journée non couverte</label>
@@ -310,15 +521,23 @@ body.dark .gc-license-countdown b{color:#88bdf2;}
       </div>
       <div>
         <label>Action</label>
-        <button id="recalcBtn" class="secondary">Recalculer</button><button id="undoRecalcBtn" class="secondary" type="button" disabled>Annuler le recalcul</button>
+        <button id="recalcBtn" class="secondary">Recalculer</button>
+        <button id="undoRecalcBtn" class="secondary gc-mini-action" type="button" disabled>Annuler le recalcul</button>
       </div>
     </div>
-    <p class="small" id="status">Aucun fichier chargé.</p>
+
     <div id="autoSaveInfo" class="small" style="margin-top:8px;padding:10px 12px;border:1px dashed var(--line);border-radius:14px;background:var(--soft);display:none;"></div>
-    <div class="actionbar" id="autoSaveActions" style="margin-top:8px;display:none;">
-      <button id="clearSavedPlanningBtn" class="secondary" type="button">🗑 Effacer le planning mémorisé</button>
-    </div>
+    <div class="actionbar" id="autoSaveActions" style="margin-top:8px;display:none;"><button id="clearSavedPlanningBtn" class="secondary" type="button">🗑 Effacer le planning mémorisé</button></div>
     <div id="parseSkeleton"><div class="small">Lecture du fichier Excel en cours…</div><div class="skeletonLine"></div><div class="skeletonLine"></div><div class="skeletonLine"></div></div>
+  </section>
+
+  <section id="analysisSummary" class="panel summaryPanel">
+    <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap">
+      <div><h2 style="margin:0 0 6px;color:#27496d">Résumé de l’analyse</h2><p class="small" style="margin:0">Vue rapide du fichier chargé et des points à traiter.</p></div>
+      <span id="globalState" class="globalState globalOk">OK</span>
+    </div>
+    <div id="summaryGrid" class="summaryGrid" style="margin-top:12px"></div>
+    <div class="quickActions"><button id="goAnomaliesBtn" class="pdf" type="button">Traiter les anomalies</button><button id="goSolutionsBtn" class="export" type="button">Voir les solutions</button><button id="goPlanningBtn" class="secondary" type="button">Voir le planning</button></div>
   </section>
 
   <section class="grid" id="kpis"></section>
@@ -393,6 +612,16 @@ body.dark .gc-license-countdown b{color:#88bdf2;}
     </div>
 
     <div id="dashboard" class="view active">
+      <div class="exportGuide">
+        <h3>Exports guidés</h3>
+        <div class="exportGuideBtns">
+          <button id="guideFullPdfBtn" class="pdf" type="button">Rapport complet</button>
+          <button id="guideAnomaliesPdfBtn" class="pdf" type="button">Anomalies seulement</button>
+          <button id="guideAgentsPdfBtn" class="pdf" type="button">Rapport agents</button>
+          <button id="guideSolutionsPdfBtn" class="pdf" type="button">Solutions proposées</button>
+          <button id="guidePlanningPdfBtn" class="pdf" type="button">Planning</button>
+        </div>
+      </div>
       <div class="actionbar">
         <button id="exportFullReportPdfBtn" class="pdf">📄 Exporter le rapport complet PDF</button>
         <button id="exportAllBtn" class="export">Tout exporter</button>
@@ -1437,7 +1666,8 @@ function renderAll(){
     renderPlanning(result);
     renderCalendar(result);
     renderCharts(result);
-    $("status").textContent = `Analyse OK (${getProgramSite() === "lyon" ? "Lyon : enchaînements 300→301 et 600→601 obligatoires" : "Paris : 400→401 obligatoires"}) : feuille "${currentSheetName}", ${result.agents.length} agents, ${result.dateCols.length} dates détectées, ${result.uncoveredServices.length} service(s) non attribué(s). Ligne dates : ${result.dateRow+1}.`;
+    $("status").textContent = `Analyse terminée : feuille "${currentSheetName}", ${result.agents.length} agents, ${result.dateCols.length} dates, ${result.uncoveredServices.length} service(s) non attribué(s).`;
+    renderAnalysisSummary(result);
   }catch(e){
     $("status").textContent = "Erreur : " + e.message;
   }
@@ -1470,11 +1700,50 @@ function renderAgents(r){
   );
 }
 
+function anomalyPriority(a){
+  const t = String(a.type || "");
+  const d = String(a.detail || "");
+  if(t.includes("non couverte") || d.includes("non couvert") || t.includes("TAS")) return {label:"Critique", cls:"priorityCritical"};
+  if(t.includes("Repos") || t.includes("Plus de") || t.includes("liée") || d.includes("obligatoire")) return {label:"Important", cls:"priorityImportant"};
+  return {label:"À vérifier", cls:"priorityCheck"};
+}
+
 function renderAnomalies(r){
+  const rows = (r.anomalies || []).map(a=>{
+    const p = anomalyPriority(a);
+    return [`<span class="badge ${p.cls}">${p.label}</span>`, badge(a.type), a.agent, a.date, a.detail];
+  });
   table("anomaliesTable",
-    ["Type","Agent","Date / période","Détail"],
-    r.anomalies.map(a=>[badge(a.type),a.agent,a.date,a.detail])
+    ["Priorité","Type","Agent","Date / période","Détail"],
+    rows
   );
+}
+
+function renderAnalysisSummary(r){
+  const box = $("analysisSummary");
+  if(!box) return;
+  const uncovered = (r.anomalies || []).filter(x=>x.type === "Journée non couverte" || String(x.detail||"").includes("non couvert")).length;
+  const important = (r.anomalies || []).filter(x=>anomalyPriority(x).label === "Important").length;
+  const state = $("globalState");
+  let label = "OK", cls = "globalState globalOk";
+  if(uncovered > 0){ label = "Critique"; cls = "globalState globalCritical"; }
+  else if((r.anomalies || []).length > 0){ label = "À vérifier"; cls = "globalState globalWarn"; }
+  state.className = cls;
+  state.textContent = label;
+  const items = [
+    ["Feuille utilisée", currentSheetName || "-"],
+    ["Agents", r.agents.length],
+    ["Dates", r.dateCols.length],
+    ["Anomalies", r.anomalies.length],
+    ["Journées critiques", uncovered],
+    ["Points importants", important],
+    ["Solutions", r.solutions.length],
+    ["Site", getProgramSiteLabel()],
+    ["Ligne dates", r.dateRow + 1],
+    ["Fichier", currentFileName || "-"],
+  ];
+  $("summaryGrid").innerHTML = items.map(([l,v])=>`<div class="summaryItem"><div class="label">${l}</div><div class="value">${v}</div></div>`).join("");
+  box.classList.add("show");
 }
 
 
@@ -2322,6 +2591,30 @@ $("exportPlanningExcelBtn").addEventListener("click", exportPlanningExcel);
 $("exportPlanningPdfBtn").addEventListener("click", exportPlanningPDF);
 $("exportFullReportPdfBtn").addEventListener("click", exportFullReportPDF);
 $("exportAllBtn").addEventListener("click", exportAll);
+if($("advancedToggle")) $("advancedToggle").addEventListener("click",()=>{
+  const box = $("advancedBox");
+  box.classList.toggle("open");
+  $("advancedToggle").textContent = box.classList.contains("open") ? "Masquer les paramètres avancés" : "Afficher les paramètres avancés";
+});
+function openView(view){
+  const btn = document.querySelector(`.tab[data-view="${view}"]`);
+  if(btn) btn.click();
+  window.scrollTo({top:document.querySelector('.tabs')?.offsetTop || 0, behavior:'smooth'});
+}
+if($("quickProblemsBtn")) $("quickProblemsBtn").addEventListener("click",()=>openView("anomalies"));
+if($("goAnomaliesBtn")) $("goAnomaliesBtn").addEventListener("click",()=>openView("anomalies"));
+if($("goSolutionsBtn")) $("goSolutionsBtn").addEventListener("click",()=>openView("solutions"));
+if($("goPlanningBtn")) $("goPlanningBtn").addEventListener("click",()=>openView("planning"));
+if($("simpleModeBtn")) $("simpleModeBtn").addEventListener("click",()=>{
+  document.body.classList.toggle("simpleMode");
+  $("simpleModeBtn").textContent = document.body.classList.contains("simpleMode") ? "Mode complet" : "Mode lecture simple";
+});
+if($("guideFullPdfBtn")) $("guideFullPdfBtn").addEventListener("click",exportFullReportPDF);
+if($("guideAnomaliesPdfBtn")) $("guideAnomaliesPdfBtn").addEventListener("click",exportAnomaliesPDF);
+if($("guideAgentsPdfBtn")) $("guideAgentsPdfBtn").addEventListener("click",exportAgentsPDF);
+if($("guideSolutionsPdfBtn")) $("guideSolutionsPdfBtn").addEventListener("click",exportSolutionsPDF);
+if($("guidePlanningPdfBtn")) $("guidePlanningPdfBtn").addEventListener("click",exportPlanningPDF);
+
 
 function loadSheet(name){
   currentSheetName = name;
