@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -2599,7 +2600,19 @@ if($("advancedToggle")) $("advancedToggle").addEventListener("click",()=>{
 function openView(view){
   const btn = document.querySelector(`.tab[data-view="${view}"]`);
   if(btn) btn.click();
-  window.scrollTo({top:document.querySelector('.tabs')?.offsetTop || 0, behavior:'smooth'});
+
+  // Navigation fluide depuis le résumé :
+  // on n'envoie plus la page vers le haut des onglets,
+  // on glisse directement vers la section réellement ouverte.
+  setTimeout(() => {
+    const target = document.getElementById(view);
+    if(target){
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  }, 120);
 }
 if($("quickProblemsBtn")) $("quickProblemsBtn").addEventListener("click",()=>openView("anomalies"));
 if($("goAnomaliesBtn")) $("goAnomaliesBtn").addEventListener("click",()=>openView("anomalies"));
